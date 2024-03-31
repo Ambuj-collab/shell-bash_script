@@ -1,0 +1,247 @@
+1) Generate random data in bash script:
+==========================================
+	In the previous exercise, you wrote a script that prompted the user to provide a password for the account that was being created. In this lesson, you're going to learn a few different ways to generate some random data, including how to automate the process of generating a random password. This way you'll be able to improve your script by requiring less input from the user. And in my opinion, the more you can automate, the better.
+
+	Now, before we do any real coding, let's look at the bash man page to see if it provides any way for us to get some random data.
+		man bash 
+	We'll just look/search for random. Since RANDOM is in all capital letters and by convention variables are in all capital letters, I can probably assume that RANDOM is a bash built-in variable and it is. Each time this parameter/variable is referenced, a random integer between 0 and 32,767 is generated.
+	
+		echo "${RANDOM}"
+		
+	If you think about it, something that is always changing is time. It's never the same time ever again. So, that is some data that is always changing. So, let's use the current date and time as the basis for a password to generate.
+		
+2) Rerun a command that starts with a given String:
+=======================================================
+	To run the most recent command that begins with a given string, use an exclamation mark followed by that string. For example, to run the last command that started with a “d”, type “ ! d “. Specify as much of the string to make it unique.
+	
+	I'm gonna do '!v' to execute the most recent command that starts with 'v'. And, this is called an event designator but it's a quick way to execute a previous command that starts with a given string. So, instead of me having to retype out the whole 'vim luser-demo05.sh', I am going to use '!v'.
+	
+	For ./luser-demo05.sh, we will use '!.' 
+	
+3) date command in Linux:
+=============================
+	man date 
+	
+	date +%s  -->  '+' says we're going to use a format. '%s' to get the Epoch time(number of seconds passed since 1st Jan, 1970
+	date +%s%N  -->  '%N' is for getting the time in nanoseconds 
+	
+4) checksums or cryptographic hash functions:
+=================================================
+	A checksum is a numeric value computed for a block of data that is relatively unique. Checksums were and are used to verify the integrity of data such as files. For example, if you download a file and you wanna make sure that it's not corrupt in some way, you find the published checksums for the file and compare it to the file you downloaded. 
+
+	Let's take CentOS for example. They publish sha1sum and sha256sum for their downloads. By the way, I didn't include the CentOS ISO that I'm about to use in the course download because it's about 700 megabytes at the time of this recording. So, if you wanna follow along with this specific section, you're going to have to download the ISO separately and then look at the checksums published by CentOS at the time you download the ISO file. You can get the checksum from the place where you download the iso file. I have captured those checksums for you in sha1sum.txt and sha256sum.txt files under shellclass/demos.
+
+	How to get the checksum value for the downloaded file?
+		So for each file that they publish, they produce a sha1sum/sha256sum that corresponds to that file.
+		So we can use the 'sha1sum' command on our side/machine to run the sha1 mathematical algorithm against any file to return its checksum or sha1sum value. So I've downloaded the Minimal ISO, so I'm going to run sha1sum on the CentOS-7 Minimal ISO here which I have downloaded.
+			sha1sum CentOS-7-x86_64-Minimal-1611.iso 
+			  output: a string/value  --> So more or less, this number/value represents all the data in that single file.
+			  
+		If it matches what is published by CentOS then you're virtually guaranteed that the data is exactly the same.
+		
+		They(CentOS) also publish sha256sum. So let's use the sha256sum command against that ISO.
+			sha256sum CentOS-7-x86_64-Minimal-1611.iso 
+			
+	Let's change the file just so slightly and see if the checksum still matches. So I'm just going to add one character to the end of the iso file. And one way to do that is just simply use echo with >> operator as shown below:
+		echo "1" >> CentOS-7-x86_64-Minimal-1611.iso
+		sha256sum CentOS-7-x86_64-Minimal-1611.iso  -->   Now, it doesn't match with the published sha256sum value for this file 
+		
+	So even a very slight change of data completely changes this checksum that's returned.
+	
+	By the way, there are other hash functions in checksum programs. Basically, sha1sum and sha256sum are hash functions. To all of them, run the following command. For any programs/files that ends with 'sum', we'll use a wild card of asterisk with 'sum'
+		ls -l /usr/bin/*sum   --> list all the files that end with 'sum'
+			output:
+				-rwxr-xr-x 1 root root 56184 Dec 17  2018 /usr/bin/b2sum
+				-rwxr-xr-x 1 root root 35576 Dec 17  2018 /usr/bin/cksum
+				-rwxr-xr-x 1 root root 43864 Dec 17  2018 /usr/bin/md5sum
+				-rwxr-xr-x 1 root root 47960 Dec 17  2018 /usr/bin/sha1sum
+				-rwxr-xr-x 1 root root 56152 Dec 17  2018 /usr/bin/sha224sum
+				-rwxr-xr-x 1 root root 56152 Dec 17  2018 /usr/bin/sha256sum
+				-rwxr-xr-x 1 root root 60248 Dec 17  2018 /usr/bin/sha384sum
+				-rwxr-xr-x 1 root root 60248 Dec 17  2018 /usr/bin/sha512sum
+				-rwxr-xr-x 1 root root  9371 Jun 19  2020 /usr/bin/shasum
+				-rwxr-xr-x 1 root root 39736 Dec 17  2018 /usr/bin/sum
+				
+	So, all these programs(cksum, md5sum, sha224sum, etc) do pretty much the same thing. They take a big chunk of data and reduce it down to a single string that represents that chunk of data to verify if it's the same or not.
+	
+	A checksum is a string of letters and numbers that is unique to a file, like a fingerprint. Checksums are generated by different algorithms, with the two most popular being Secure Hash Algorithms (SHAs) and the MD5 algorithm. Ubuntu MATE provides the SHA256 checksum on its download page.
+	Verifying a download involves checking the checksum of the file you downloaded versus the checksum provided on the download web site. Mismatching checksums can indicate a corrupted or otherwise compromised file, so verifying your downloads is a good habit to adopt!
+	
+	References:
+	1) https://ubuntu-mate.org/faq/verify-download-quick/
+	2) https://itsfoss.com/checksum-tools-guide-linux/
+	
+5) Difference between ">" and ">>" in Linux:
+==============================================
+	As discussed in the introductory part, both operators are output direction operators. The main difference is mentioned below:
+
+	">": Overwrites the existing file, or creates a file if the file of the mentioned name is not present in the directory.
+		echo "Welcome to LinuxHint" > my_file_1.txt
+		cat my_file_1.txt
+		echo "Learn latest tips and tricks about Linux" > my_file_1.txt
+		cat my_file_1.txt
+
+	">>": Appends the existing file, or creates a file if the file of the mentioned name is not present in the directory.
+		echo "Welcome to LinuxHint" >> my_file_2.txt
+		cat my_file_2.txt
+		echo "Learn latest tips and tricks about Linux" > my_file_2.txt
+		cat my_file_2.txt
+
+	While making modifications in a file and you want to overwrite the existing data, then use the ">" operator. If you want to append something to that file, use the ">>" operator.
+	
+6) Use of checksum in random password generation:
+======================================================
+	Now let's bring this back to password generation. As you might have noticed, the checksums are actually hexadecimals numbers with 0 to 9, representing the values from 0 to 9, and A to F, representing the values from 10 to 15. If we were to use a sha256sum as a password, for example, that password would consist of 16 different characters, that 0 to 9 and A to F and be 64 characters in length. That's a pretty darn good password.
+	
+	So, let's turn the current date and time into a sha256sum by piping the output of the date command as the input into the sha256sum command.
+	
+		date +%s | sha256sum
+	
+	Why does the above command work? I mean, earlier, we were running sha256sum against files. Now, we are running sha256sum and asking to take the data from standard input. Run the 'man sha256sum' for the answer. 	
+		man sha256sum  -->  Print or check SHA256 (256-bit) checksums. With no FILE, or when FILE is -, read standard input.
+	So, remember with a pipe, pipe turns the output of the previous command as standard input for the command that follows the pipe. So that is how this works.
+	
+	By the way, most commands work like this. If they take a file as an argument, you can also not use/pass the file and instead use standard input via a pipe and it will operate on that input.
+	
+	
+	So if we wanna control the size of this generated password, you'll need to control the number of characters returned or displayed. One way to do this is with the head command. Let's chain the date command, the sha256sum command and the head command all together. So, you can have multiple pipes and not just one pipe. you can keep modifying the output and keep piping it into different commands. 
+		date +%s | sha256sum | head -c8  --> to print/output 1st 8 characters
+	
+	If we wanna make this even better, we can add those nanoseconds the above command. Now, we will get even more random data. 
+		date +%s%N | sha256sum | head -c8  --> to print/output 1st 8 characters
+	
+7) head command in Linux:
+============================
+	Just to briefly recap, how can you tell if head is a program on the system or if it's a shell builtin?
+	Well, of course you can use the type command, 
+		type -a head
+		  output:  head is /usr/bin/head   --> this says, it's a program and not shell builtin
+
+	So, we can't use 'help head'. What we have to do is use 'man head'. 
+	Print  the  first 10 lines of a FILE to standard output. With no FILE, or when FILE is -, read standard input. So, we know that we can use this head command in conjunction with the pipe.
+	
+	We can use '-cK' option(like '-cK') or --bytes in the long form and what that does is prints the first K bytes of a file. So, if we do '-c1' then it would just print the first character of the file. 1 byte means 1 character in Linux.
+		head -c1 /etc/passwd  -->  it prints the first character of the passwd file
+	
+	The next option is '-n' for lines and that prints the first n number of lines instead of the default first 10 lines.
+		head -n1 /etc/passwd   -->  it prints the first line of /etc/passwd file
+			OR
+		head -n 1 /etc/passwd
+			OR
+		head -1 /etc/passwd  -->  this is an old style of using this head command
+		
+	Now, I'm sure you remember from the man page, how you can use standard input instead of a file with a head command, so let's try that out. Let's generate some output from the echo command. We'll just do 'echo testing' and then we will pipe that output as the standard input into the head command and let's just print the first two characters. 
+		echo "testing" | head -c2  -->  it returns 'te'
+	
+8) tail command in Linux:
+============================
+		man tail 
+	Print the last 10 lines of a FILE to standard output. With no FILE, or when FILE is -, read standard input. 
+	
+	tail -f <log_file_name>  --> to follow the log generation of any application in the specified log file 
+
+9) shuf command in Linux:
+============================
+	Now, there are other probably, way more secure, ways to generate a password that has nothing to do with the current date and time. Let's add a special character to the generated password. Now let's start out by displaying the set of special characters that we want to use. And I'm actually going to store those into a variable.
+		SC='!@#$%^&*()_-+='
+		echo ${SC}  -->  output:  !@#$%^&*()_-+=
+		
+	Now we need a way to randomly extract just one special character from that list. There is a command called 'shuf', which will help us here. So let's look at the man page for this command.
+		man shuf 
+	
+	The shuf command in Linux writes a random permutation of the input lines, from a file, to standard output. It pseudo randomizes an input in the same way as the cards are shuffled. With no FILE, or when FILE is -, read standard input.
+	
+		echo "hello" >> ambuj.txt 
+		echo "hi" >> ambuj.txt 
+		echo "welcome" >> ambuj.txt 
+		cat ambuj.txt 
+			output:
+				hello
+				hi
+				welcome
+				
+		shuf ambuj.txt 
+			output:
+				hi
+				hello
+				welcome
+		
+		shuf ambuj.txt
+			output:
+				hi
+				welcome
+				hello
+		
+	The shuf command displays the input lines in random order as output. 
+	
+		shuf -n 1 ambuj.txt 
+			output:  welcome
+			
+		shuf -n 1 ambuj.txt 
+			output:  hello
+		
+		shuf -n 1 ambuj.txt 
+			output:  welcome
+			
+		shuf -n 2 ambuj.txt 
+			output:  
+				hi
+				hello
+				
+	So, we need to break our string(i.e., ${SC}) of characters into individual lines, each line containing a character, so that, we can then use shuf to do the randomization. This can be achieved using 'fold' command in Linux.
+
+		echo "${SC}" | fold -w1 | shuf  -->  to get a random order of list of special characters.
+		echo "${SC}" | fold -w1 | shuf -n1  --> to get a random special character
+		echo "${SC}" | fold -w1 | shuf | head -c1  --> to get a random special character
+		
+				
+10) fold command in Linux:
+===========================
+		man fold 
+	The fold command in Linux wraps each input line in a file to fit a specified width and prints it to the standard output. With no FILE, or when FILE is -, read standard input. By default, it wraps lines at a maximum width of 80 columns, which is configurable. You use the fold command to transform a single line of text into multiple lines.
+	
+		fold abccba.txt  
+		
+	'w' -->  By using this option in the fold command, we can limit the width by the number of columns.
+		fold -w50 abccba.txt  -->  we wrap the lines of abccba.txt to a width of 50 columns
+		
+		SC='!@#$%^&*()_-+='
+		echo ${SC}  -->  output:  !@#$%^&*()_-+=
+		
+		echo "${SC}" | fold -w1
+			output:
+				!
+				@
+				#
+				$
+				%
+				^
+				&
+				*
+				(
+				)
+				_
+				-
+				+
+				=
+
+11) Positional parameter in bash script:
+============================================
+	The variable of dollar zero(i.e., ${0}) is actually a positional parameter and positional parameters are variables that contain the contents of the command line.
+
+	Before we go any further, let's talk about the definition of a parameter versus an argument. A parameter is a variable that is being used inside the shell script. An argument is the data passed into the shell script. So, an argument, supplied on the command line, becomes the value stored in a parameter. With that in mind, the very first positional parameter is ${0} which contains the name of the script itself. The next positional parameter is ${1} which stores the value of the first argument passed to the script on the command line. The positional parameter, ${2}, stores the second argument. ${3} stores the third argument and so on.
+	
+	Create a bash script of name 'luser-demo06.sh' with the following contents.
+		#!/bin/bash
+		echo "You executed this command: ${0}"
+	
+	Save the file and run the follow commands.
+		chmod 755 luser-demo06.sh 
+		./luser-demo06.sh 
+			output:
+				You executed this command: ./luser-demo06.sh
+	
+	So, notice how ${0} expanded to how we executed the script, this dot forward slash and then the script name. Now, let's change how we call the script by providing the full path to the script.
+		/home/admin/luser-demo06.sh 
+			output:
+				You executed this command: /home/admin/luser-demo06.sh

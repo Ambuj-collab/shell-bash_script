@@ -1,0 +1,532 @@
+1) Virtualization Software:
+===============================
+	My favorite virtualization software for this purpose is VirtualBox available for download at virtualbox.org.
+	If you're looking for a virtualization solution for running virtual machines in production, for example, I'd be looking at something like VMware, KVM, or oVirt but for our purposes for creating test systems on our local machine and working together in this class, VirtualBox is the way to go.
+	
+	Typically, what you'll do is download a Linux ISO from your favorite distributions website and then tell VirtualBox to use that ISO to boot the system with.
+	
+2) Shebang in Shell Script:
+================================
+	On Linux, a shebang (#!) is a special line at the beginning of a script that tells the operating system which interpreter to use when executing the script. And you wanna start out each shell script with a shebang and then a path to the interpreter(/bin/bash). So what will happen when you execute the shell script is that the commands inside the script will be interpreted by /bin/bash.
+	
+	So really what happens is when you execute the shell script, /bin/bash will get executed and the file name actually gets passed to that script, like '/bin/bash <shell_file_name>' and what happens is bash then executes everything
+
+in this file.
+
+3) What we will be doing in our 1st Shell Script?
+=====================================================
+	The first shell script you're going to write in this course creates new user accounts. In that script, you're going to make sure the person who executes the script has the proper privileges to do so and you're going to make sure the specified account was created successfully. If for some reason the account creation process fails, you're going to let the person running the shell script know.
+
+	That's the first milestone you're working toward. After you complete that initial script, you're going to expand it and make it better by automatically generating random passwords, accepting command line arguments, and so on.
+
+	We're working towards creating a script that is going to create local users, or users that are local to a system on which script is getting executed. Later on in the course, we'll be creating a script that will add remote users, or users to systems other than the one that your script is executing on.
+	
+4) Comments in Shell Script:
+================================
+	When you start a line with a pound sign(#), it's actually a comment. Comments are not executed, they're just simply there for humans only.
+
+5) Allocating Shell Script file permission to read, write and execute
+===========================================================================
+	What we wanna do is add execute permission so that I, you, and anyone else can actually execute this file, and how we do that is with chmod command. 
+	
+		chmod 755 <shell_file_name>   OR  chmod +x <shell_file_name> 
+		ls -l   --> to see the permissions on the shell script file or any other file
+		
+	By the way, if you can't read the file then you can't execute it because you can't see the contents that are going to be read in by the interpreter and executed. So typically, the default permission you want to put on your shell scripts is 755.
+	
+6) How to run your Shell Script?
+====================================
+	To execute a file in your current directory, dot forward slash and then the name of the file.
+		./luser-demo01.sh 
+		
+7) Creating empty file in Linux using touch command:
+==========================================================
+	Let's just use the touch command to create an empty file. That's what touch does. Touch either creates an empty file if one doesn't exist or it updates the last access timestamp of a file.
+		touch <file_name>
+		
+9) echo command in Linux:
+==============================
+	Echo is actually a shell builtin. That means it's a command that's built within the shell. It doesn't require any external programs to execute. It's really just a part of bash.
+	
+	So, how do we know it's a shell builtin?
+
+	Well, you can use the type command, which is also a shell builtin, to show you if it's a shell builtin or not. So if you do type space the command you're interested about, which we are interested in echo. 
+		type echo   -->  it says echo is a shell builtin
+		type -a echo  -->  if you want to see all instances of echo on your Linux system
+		
+	This simple echo command can come in really handy when you're debugging or writing scripts. You can use it to see exactly what is going on inside the script along the way.
+		
+10) help command in Linux:
+=================================
+	If you want to get help on a shell builtin, use the help command, so we'll do help echo and a lot of the information scrolled off our screen quickly
+		help echo  --> ru this command
+
+	so I'm gonna pipe it to less, it's a pager, so we can page up and down to this output. So I'm gonna pipe it to less.
+		help echo |less 
+		
+11) uptime command in Linux:
+==============================
+	The uptime command in Linux is a powerful tool that displays the current time, the system's uptime, the number of users, etc.
+
+	Let's look at an example of a command that is not a shell builtin. One command that comes to mind is uptime. So uptime just displays how long the system that you're logged into has been up. We'll do 
+		type -a uptime
+	and it says uptime is actually /usr/bin/uptime. That's what gets executed when you run uptime.
+
+	So if you run 'help uptime', you're not gonna get any help because it's not a shell builtin.
+
+	However, if you want to get help on uptime, you would use the man command, which is short for man pages
+		man uptime
+		
+	So that's how you get information on how to use commands that are not part of shell builtins.
+	
+12) Notes:
+==============
+	Remember that a shell script just executes every command inside that script just as if you were typing it on the command line.
+	
+13) Variables in Shell Script:
+==================================
+	Variables are simply storage locations that have a name.
+	For example,  WORD='script'
+	
+	Unlike some other programming languages, when you are creating variables, you don't have to specify its type, whether it's a string or an integer, or anything like that. By the way, I wanna point out that it's very important that there's no space in between the equal sign. So it's the variable name followed by an equal sign without any space, again without any space, then the assignment. In this case, we're assigning a string and strings are enclosed in quotation marks, either single quotation marks or double quotation marks.
+	
+	By the way, there are some rules around variable names. Variable names can contain letters, digits, and underscores and they can start with letters or underscores but they cannot start with a digit.
+	
+	By the way, I didn't necessarily mention this but by convention, not by rule or syntax, variables are in all uppercase. That's why I used uppercase WORD as a variable name and that way you can typically easily spot what is a variable and what is not.
+	
+14) GOTCHA around echo command:
+=================================
+	WORD='script'
+	echo '$WORD'   -->  Output:  $WORD
+	echo "$WORD"   -->  Output:  script
+	
+	In the 1st echo statement, I used single quotes but in 2nd echo statement, I used double quotes. Single quotes prevent the expansion of variables, so if you want echo to display exactly what you specify, put it in single quotes. If you want variables to be interpreted, make sure that you use double quotes.
+	
+	By the way, we're just using the echo shell builtin for now but this concept of single quotes and double quotes apply to other commands as well.
+	
+	To say that another way, it's not because we're using echo that this expansion happens with double quotes and it doesn't with single quotes. It's the quotes themselves that is causing this expansion or not. And then you can use this functionality with other commands as well, not just with echo.
+	
+	You can also enclose the variable name in curly braces and precede the opening brace with the dollar sign. 
+		For sxample,  echo "${WORD}"  -->  Output:  script
+		
+	Now, if we wanna append text to the variable, we have to use this dollar sign brace syntax. Let me show you an example.
+		For sxample,  echo "${WORD}ing"   -->  Output:  scripting
+	So if we want to append 'ing' directly after the output of the variable, we have to use the curly braces.
+		For sxample,  echo "$WORDing is fun"   -->  Output:  ' is fun' will be output because $WORDing variable doesn't exist
+	The above command doesn't work as expected because bash interpreter doesn't know that 'ing' is not part of the variable name
+
+		ENDING='ed'  --> We're using single quotes, so, we're not doing any variable expansion.
+		ENDING="$WORD"  -->  We're using double quotes, so, we're doing the variable expansion. Assigning the value of $WORD variable to the $ENDING variable
+		
+15) Preset variables provided by bash shell(bash shell variables):
+==========================================================================
+	Well, you get a lot of stuffs for free when you use bash and one of the things you get for free are special preset variables.
+	Let's look at the bash man page, by running the 'man bash' command, to see where this UID comes from. By the way, to navigate a man page, you're going to use 'vi' or 'vim' key bindings. 
+
+	How to efficiently search in man?
+	On most Linux systems, the default pager used by man is less. If that is the case, you can search in a man page using the / (slash) key followed by a query
+	man will implicitly open in less if you have it installed. So maybe you could read man page for less. less actually supports search on it's own. Just press / and write what you wanna search and enter. Use n to skip to next occurrence and N for previous.
+
+	You can read the man page of less, by running 'man less' command, for further tricks on how to effectively use less to improve your experience with man pages.
+
+	We're looking for UID, which is a bash shell variables, so we'll press /UID and hit enter button. This will take you to the first instance of that.
+	
+	The manual/man allows us to search either forward or backward from our current position. We use the / to search forward. Contrarily, we use the ? to search in the reverse direction.
+
+16) How can I find out what shell I am using on my Linux OS(what is the default shell your Linux OS is using)?
+==================================================================================================================
+	echo "$SHELL"
+	
+17) id command in Linux:
+=============================
+		type -a id  --> to see 'id' is a shell builtin or just a program 
+	So, it is actually a program and it's not a shell builtin. Since, it's not a shell builtin, we can learn about it by using the man page
+		man id  --> run this command
+		
+		id  --> run this command. It prints user and group information for the current logged-in user
+		id -u  -->  it prints the UID of the current logged-in user 
+		id -u -n  --> it prints the name of the UID user returned by 'id -u'
+		
+	I also wanna point out that it doesn't matter about the order of these options.
+		id -n -u  --> same output as above command('id -u -n')
+		
+	Another thing I want to point out is that when you have these single character options then you can actually combine them as shown below.
+		id -un  or  id -nu
+		
+	Alternate ways to get the current logged-in username
+		whoami  or  echo "$USER"
+		
+		type -a whoami  --> let's look at what type of command it is. It's a program. Hence, use 'man whoami' to read about it
+
+18) How to store the output of a command in a variable?
+==========================================================
+	USER_NAME=$(whoami)
+	
+	OR
+	
+	USER_NAME=`whoami`  --> alternative syntax. This is an older style syntax
+
+19) if-else statement in bash script:	
+=======================================
+	type -a if  --> 'if' is a shell keyword. So, we can get help on that by running 'help if' command 
+	help if
+	  output:
+		if: if COMMANDS; then COMMANDS; [ elif COMMANDS; then COMMANDS; ]... [ else COMMANDS; ] fi
+		Execute commands based on conditional.
+
+		The `if COMMANDS' list is executed.  If its exit status is zero, then the
+		`then COMMANDS' list is executed.  Otherwise, each `elif COMMANDS' list is
+		executed in turn, and if its exit status is zero, the corresponding
+		`then COMMANDS' list is executed and the if command completes.  Otherwise,
+		the `else COMMANDS' list is executed, if present.  The exit status of the
+		entire construct is the exit status of the last command executed, or zero
+		if no condition tested true.
+
+		Exit Status:
+		Returns the status of the last command executed.
+		
+	You can think of an exit status of zero being true.
+	
+20) Command separator in bash script:
+========================================
+	The semicolon is the command separator in bash script. Another command separator is to hit enter and begin on a new line.
+	For example, 
+		if [[ "${UID}" -eq 0 ]]; then echo 'You are root user.'; fi 
+		
+		OR 
+		
+		if [[ "${UID}" -eq 0 ]]
+		then
+		  echo 'You are root user.'
+		fi 
+		
+	The UID of zero is always assigned to the root user. Root always has the UID of zero on every Linux/Unix system that you'll ever encounter. You could test against the username but it's probably a little bit more safe and secure to test against UID zero because again, that is always a hundred percent, always assigned to the root user.
+		
+	I like to use the new line as a command separator, so, it doesn't run altogether and it looks visually better to me and it's easier for me to read. However, it is correct to also use a semicolon and keep it all on one line.
+	
+21) Where do we get these double square brackets in the 'if' statement?
+
+	Well, let me show you.
+		type -a [[  -->  output:  [[ is a shell keyword 
+
+	Those double square brackets are actually a shell keyword. So let's get help on those.
+		help [[
+		 output:
+			[[ ... ]]: [[ expression ]]
+			Execute conditional command.
+
+			Returns a status of 0 or 1 depending on the evaluation of the conditional
+			expression EXPRESSION.  Expressions are composed of the same primaries used
+			by the `test' builtin, and may be combined using the following operators:
+
+			  ( EXPRESSION )    Returns the value of EXPRESSION
+			  ! EXPRESSION              True if EXPRESSION is false; else false
+			  EXPR1 && EXPR2    True if both EXPR1 and EXPR2 are true; else false
+			  EXPR1 || EXPR2    True if either EXPR1 or EXPR2 is true; else false
+
+			When the `==' and `!=' operators are used, the string to the right of
+			the operator is used as a pattern and pattern matching is performed.
+			When the `=~' operator is used, the string to the right of the operator
+			is matched as a regular expression.
+
+			The && and || operators do not evaluate EXPR2 if EXPR1 is sufficient to
+			determine the expression's value.
+
+			Exit Status:
+			0 or 1 depending on value of EXPRESSION.
+			
+		The important thing to keep in mind here is that it says(the above output), you can use the same things that you can use with a test builtin to generate your expressions. So, test is indeed a shell builtin as well as a command. We're interested in using the shell builtin.
+		
+		Another important thing to note about the double square bracket syntax is that it really replaced the single square bracket syntax. So, actually you may see some shell scripts that look like this, 'if' with a single square opening bracket then a conditional expression and a single square closing bracket.
+		
+			if [ "${UID}" -eq 0 ]
+			then
+			  echo 'You are root user.'
+			fi 	
+		
+		So again, just know that the double square brackets is the new way to do it. You can also use the single square bracket but that's an older way to do it.
+		
+			type -a [  -->  [ is a shell builtin but it's actually also a command on the file system.
+				output:
+					[ is a shell builtin
+					[ is /usr/bin/[        --> it tells that [ is also a command on the file system
+			
+			ls -l /usr/bin/[
+				output: 
+					-rwxr-xr-x. 1 root root 41496 Nov  5  2016 /usr/bin/[   --> you can see that this is file and not directory 
+		
+		So sure enough, that('[') is a file that's located at /usr/bin/. It's a file and you can execute it like that. So, if you're using a really slimmed down shell(any other shell than bash), that doesn't have the opening square bracket builtin, the shell script will default to use /usr/bin/[. However, we're using bash, we don't have to worry about that.
+		
+22) test in bash shell:
+==========================
+		type -a test  --> test is a shell builtin
+		help test
+			output:
+			test: test [expr]
+			Evaluate conditional expression.
+
+			Exits with a status of 0 (true) or 1 (false) depending on
+			the evaluation of EXPR.  Expressions may be unary or binary.  Unary
+			expressions are often used to examine the status of a file.  There
+			are string operators and numeric comparison operators as well.
+
+			The behavior of test depends on the number of arguments.  Read the
+			bash manual page for the complete specification.
+
+			File operators:
+
+			  -a FILE        True if file exists.
+			  -b FILE        True if file is block special.
+			  -c FILE        True if file is character special.
+			  -d FILE        True if file is a directory.
+			  -e FILE        True if file exists.
+			  -f FILE        True if file exists and is a regular file.
+			  -g FILE        True if file is set-group-id.
+			  -h FILE        True if file is a symbolic link.
+			  -L FILE        True if file is a symbolic link.
+			  -k FILE        True if file has its `sticky' bit set.
+			  -p FILE        True if file is a named pipe.
+			  -r FILE        True if file is readable by you.
+			  -s FILE        True if file exists and is not empty.
+			  -S FILE        True if file is a socket.
+			  -t FD          True if FD is opened on a terminal.
+			  -u FILE        True if the file is set-user-id.
+			  -w FILE        True if the file is writable by you.
+			  -x FILE        True if the file is executable by you.
+			  -O FILE        True if the file is effectively owned by you.
+			  -G FILE        True if the file is effectively owned by your group.
+			  -N FILE        True if the file has been modified since it was last read.
+
+			  FILE1 -nt FILE2  True if file1 is newer than file2 (according to
+							   modification date).
+
+			  FILE1 -ot FILE2  True if file1 is older than file2.
+
+			  FILE1 -ef FILE2  True if file1 is a hard link to file2.
+
+			String operators:
+
+			  -z STRING      True if string is empty.
+
+			  -n STRING
+				 STRING      True if string is not empty.
+
+			  STRING1 = STRING2
+							 True if the strings are equal.
+			  STRING1 != STRING2
+							 True if the strings are not equal.
+			  STRING1 < STRING2
+							 True if STRING1 sorts before STRING2 lexicographically.
+			  STRING1 > STRING2
+							 True if STRING1 sorts after STRING2 lexicographically.
+
+			Other operators:
+
+			  -o OPTION      True if the shell option OPTION is enabled.
+			  -v VAR         True if the shell variable VAR is set.
+			  -R VAR         True if the shell variable VAR is set and is a name
+							 reference.
+			  ! EXPR         True if expr is false.
+			  EXPR1 -a EXPR2 True if both expr1 AND expr2 are true.
+			  EXPR1 -o EXPR2 True if either expr1 OR expr2 is true.
+
+			  arg1 OP arg2   Arithmetic tests.  OP is one of -eq, -ne,
+							 -lt, -le, -gt, or -ge.
+
+			Arithmetic binary operators return true if ARG1 is equal, not-equal,
+			less-than, less-than-or-equal, greater-than, or greater-than-or-equal
+			than ARG2.
+
+			Exit Status:
+			Returns success if EXPR evaluates to true; fails if EXPR evaluates to
+			false or an invalid argument is given.
+	
+	We'll do 'help test' and I know from experience that a lot of information is gonna scroll off the screen. So, one way to prevent that is to use a pager. So, we'll use a pipe to pipe the output of 'help test' into our pager of less.
+	
+		help test | less    --? press 'q' button of your keyboard to exit from the pager 
+		
+23) Linux command to switch to root user:
+============================================
+	The majority of Linux distributions come with the sudo convention configured by default for the user that is set up during installation. If your user has access to the sudo command, then you can switch to the root account by appending the -i option, like so
+		sudo -i
+		
+	After providing your sudo password, you will be logged into the root account and no longer required to continue prefacing your commands with sudo in order to run them with root privileges.
+	
+	Alternatively, there is no reason to log into the root user account if you(current logged-in user) have access to the sudo command and simply want to run a few commands as the root user. This is actually the recommended approach, as it is more secure than having users to log into the root account directly. For example, to run a command as root, preface it with 'sudo'. Use the sudo Linux command to temporarily access root and execute a command with administrator privileges.
+		For example, sudo whoami  --> output: root  --> given that current logged-in user is different than root
+		
+	Although we are running this command as an ordinary user, the whoami command shows us the effective user that is running the command, which is root.
+	
+	If your user does not have sudo permissions, you should be able to log in to the root user account via the su command. In this case, you will need to know the password of the root user. The majority of times, you will want to append the - option, in order to update your local environment variables.
+		su -
+		
+	exit  --> run this command to come out from the root user 
+
+24) Giving a Linux user sudo permissions:
+==============================================
+
+25) Notes:
+================
+	By the way, it's a good idea to check for any requirements in your shell script. If you know something that is required for the script to work properly, check for it. Never assume things are just gonna to be the way that you want them to be. For example, if a script adds users and adding users requires root privileges then you want to check for root privileges. Don't assume that the user/client knows that they need to execute it with root privileges. They may execute it as their own user. So, you wanna do some sanity checking to make sure that, that happens as needed. And you'll wanna do this type of sanity checking throughout the script whenever it's needed.
+	
+26) exit in Shell Script:
+=============================
+	Let's say we don't want the user to go any further unless they have the UID of 1000. In order to stop the execution of a script, we're gonna use the exit command. By the way, we can supply an exit status after the exit command, we're going to supply one here. The reason why we're going to specify one is because the script does not successfully execute all the way through the bottom as it should, so we're going to want to exit with a non-zero status. So, by convention, when a script or a program executes successfully, it returns an exit status of zero, if it doesn't execute successfully for whatever reason, it returns a non-zero exit status. A lot of times that exit status is one, however it could be two, it could be 99, it could be 244, you can use a variety of different exit statuses if you want.
+	
+		type -a exit 	-->  output: exit is a shell builtin only 
+		help exit 
+			output:
+				exit: exit [n]
+				Exit the shell.
+
+				Exits the shell with a status of N.  If N is omitted, the exit status
+				is that of the last command executed.
+				
+27) exit status:
+=====================
+		USER_NAME=$(id -un)
+		if [[ "${?}" -ne 0 ]]
+		then 
+		  echo 'The id command did not execute successfully.'
+		fi
+		
+		OR
+
+		USER_NAME=$(id -un)
+		if [[ $? -ne 0 ]]
+		then 
+		  echo 'The id command did not execute successfully.'
+		fi
+
+	So Bash has some special variables that it sets and one of these special variables is $?. And of course, as you know, you can encapsulate that in curly braces, so ${?}, is actually a special variable that holds the exit status of the most recently executed command. So, the most recently executed command in our script is 'id -un', so the exit status of that script is going to be stored in $?.
+	
+		id -un 
+		echo $?  --> output: 0
+		id -unx  --> -x is not a valid option 
+		echo $?  --> output: 1
+		
+	"${?}" -ne 0   --> this is a test expression in bash script
+		
+	So again, if we want to test for success, we'll probably want to test if it does not equal to zero, because that's the convention.
+
+28) String_comparison/String_test in if statement:
+======================================================
+		USER_NAME=$(id -un)
+		USER_NAME_TO_TEST_FOR='vagrant'
+		if [[ "${USER_NAME}" = "${USER_NAME_TO_TEST_FOR}" ]]
+		then 
+		  echo "Your username matches ${USER_NAME_TO_TEST_FOR}."
+		fi
+	
+	It's important to point out that the equal sign can either be an assignment operator or a test operator depending on the context it has been used. If you look at the variable assignment for USER_NAME_TO_TEST_FOR, that equal sign is used as an assignment, we're assigning the value of 'vagrant' into the variable of USER_NAME_TO_TEST_FOR. However, when we're doing a test inside these double square brackets, then it's a test operator, it's not assigning value of USER_NAME_TO_TEST_FOR variable to USER_NAME variable, it's comparing them, it's testing them.
+	
+	
+	By the way, sometimes you'll see a double equal sign and let me put this in the script to show you here, so sometimes you will see below.
+		if [[ "${USER_NAME}" == "${USER_NAME_TO_TEST_FOR}" ]]
+		then 
+		  echo "Your username matches ${USER_NAME_TO_TEST_FOR}."
+		fi
+
+	When you use the double equal sign operator, the string to the right of the operator is used as a pattern, and pattern matching is performed. So we're not looking for a pattern, we're looking for an exact match, so we'll just use one equal sign, however, some people even use the double equal signs when they don't use a different pattern on the right hand side of the double equal signs(they're also looking for the exact match but still they use double equal signs)(they are using the exact match on the right hand side with == operator). So be aware that sometimes you'll see a single equal sign and sometimes you'll see a double equal sign.
+
+29) Why to have 'exit 0' at the end of the script?
+======================================================
+	If we may get all the way to the end of the script then we can use 'exit 0' and we can be very explicit about the exit status that we want to use, we'll use zero to say our script completed successfully. Remember that if you don't specify an exit status or exit code, the exit status of the most recently executed command will be used as the exit status of your script, or as the exit status of the exit command if you have.
+	
+30) Taking input from user who is running your script:
+===========================================================
+	One way to get input from a user is by using the 'read' shell builtin command which is what we're going to use in this script(luser-demo04.sh under shellclass/demos). Another way to get input from a user is to have them supply information on the command line as arguments to your script and you'll be learning about that method later on in the course. But for now, let's look at the read built-in.
+	
+	So as you already know, you can use the 'type' command to tell if a command is a shell builtin or if it's an actual file on the file system.
+		type read  -->  read is a shell builtin
+		
+	Again, if you wanna see all the options here, you can do -a
+		type -a read 
+			output:
+				read is a shell builtin
+				read is /usr/bin/read    -->  you can use the path to a file that's on your system
+				
+		help read | less
+	Read shell builtin command reads one line of standard input and stores it into a variable.
+		
+		read -p 'Type something: ' THING  --> THING is a variable which is going to hold whatever user inputs. '-p' option is for prompt. Text next to '-p' option which will be shown to the user asking for the inputs 
+		
+		echo $THING
+				
+31) Inputs and Outputs in Linux/shell_script:
+================================================
+	There are actually three default types of input and output. They are standard input, standard output and standard error. By default, standard input comes from the keyboard. Standard output and standard error are displayed to the screen. I'm using my words here carefully. I'm saying by default because as you're going to learn here in a few minutes that standard input does not always have to come from the keyboard but typically that's where standard input comes from.
+	
+32) useradd command:
+======================
+	man useradd 
+
+	Usernames have some rules around them. Typically, they are eight characters or less by convention. Now, that's not a hard and fast rule but that's typically a convention or a practice that is followed. By the way, this is something that you could check in your shell script if you wanted to or you can just display a warning if the username is over eight characters and we'll get to testing for string sizes in a future lesson. But that's just something to keep in the back of your mind for now.	
+		
+	So let's jump to the shell, create a username that has more than eight characters and see what happens. In order to add users to a system, you need to use super user privileges and one way we can do that is with the sudo commands, we'll do 'sudo useradd <username>'. We're going to leave off all those optional options and then create a long username. For example, I'm going to use 'dougstamper' as the username.
+
+		sudo username dougstamper
+	
+	So now, we can switch to this user. Again, if we can use root privileges, we won't have to specify a password, so we'll use 'sudo su - dougstamper'. By the way, the dash option to the su command tells su to start with an environment similar to that of a real login and also you can use 'su -l' to get the same experience but either way, 'su -' or 'su -l' will start a login shell if you will.
+	
+		[vagrant@localhost vagrant]$ sudo su - dougstamper  --> So now, we're logged in here as dougstamper user. We can see our prompt has changed to dougstamper
+		[dougstamper@localhost ~]$
+	
+	A lot of commands such as ps and so on only display eight characters of username. So now what I'm gonna do is look at the process table with the ps command. 
+		ps -ef  -->  to show every process
+			output:
+				..
+				..
+				root     3311 3310 0 12:27 pts/0   00:00:00 sudo su - dougstamper
+				dougsta+ 3312 3311 0 12:27 pts/0   00:00:00 -bash
+				dougsta+ 3335 3312 0 12:29 pts/0   00:00:00 ps -ef
+				
+	You can see here at the bottom that the two commands that are in the process table '-bash' and 'ps -ef' are by the dougstamper username but you can only see the first eight characters when the username is longer than 8 in that field and you'll see a plus sign after it.
+	
+	So again, it's not something that's going to break anything if you have a nine characters or 10 characters or 20 characters username, it's just something to be aware of that some of these commands, such as ps, are going to give you a little bit of different output because historically usernames are limited to eight characters. So that's just something I wanted to point out here. 
+	
+		exit  --> run this command to come out of the dougstamper's shell and get back to the vagrant(previous) user
+		
+	By the way, usernames are case sensitive, so, lowercase 'doug' is not the same user as capital 'Doug'. Again, you can do that. You can use uppercase letters but by convention they're in all lowercase. So it's a good practice to make sure that your usernames are in all lowercase.
+	
+	Another thing to know is that you can't include any special characters in your username, however, you can use numbers. For example, if you're creating accounts using last names and you have several people at your company that have the last name of Smith then you could do Smith1, Smith2, Smith99 and so on, those are all valid usernames.
+	
+	I wanna point out one more thing to you here. There's an option to the useradd command, which is '-c' that allows for a comment and that comment can be any string. Now, generally it's a short description of the login and historically it's been used for a person's name. So, if we make smith1 account and it's for Jane Smith then we would put 'Jane Smith' in the comment, so, we know what person is associated with that account.
+	
+	The '-m' option of useradd command creates the user's home directory if it does not exist. The files and directories contained in the skeleton directory(which can be defined with -k option) will be copied into the home directory.
+	
+33) passwd command:
+=====================
+
+	By default, the password command spelled 'passwd' will prompt you to enter a new password for your account. To change a password for another account, you have to specify that account, of course, only root can change other people's passwords. So let's just try the command out here on the command line for our current user.
+		passwd  --> run this command 
+			output:
+				Changing password for admin.
+				Current password:             --> enter your current password and then you will be prompted to enter new password
+				
+	So we need to come up with some sort of method to get around this interactive prompt. So, let's dig into the man page and see if there's a way to supply the password non-interactively or in some programmatically or automated fashion. In other words, how to programmatically supply a password to the passwd command
+		man passwd
+	
+	--stdin  -->  This option is used to indicate that passwd should read the new password from standard input which can be a pipe. So, remember earlier that I said by default standard input comes from a keyboard. Well, standard input can also come from another command when it's used in what's called a pipeline. When you use a pipe symbol(|) on a command line, it means take the standard output from the preceding command, the command that goes before the pipe and pass it as the standard input to the following command or the command that comes after the pipe.
+	
+		echo ${PASSWORD} | passwd --stdin ${USER_NAME}
+		
+	If the first command displays error messages then those will not be passed to the second command. Those error messages are called standard error output. You'll learn how to control standard error output later in the course.
+	
+34) How to luser-demo04.sh shell script present under shellclass/demos directory?
+======================================================================================
+	Because we're adding a user with this script, we need to run this script with root privileges.
+		sudo ./luser-demo04.sh
+	
+	Now let's switch to the user which the script has created with the username which you have passed as input and use their password.
+		su - <username> 
+		
+	Now, you can look at the /etc/passwd file to see if the user was created. You can use the 'cat /etc/passwd' command or even the 'tail /etc/passwd' command which will just print the bottom 10 lines of the file.
+				
+				
+	
+				
+				
+
+	
+	
