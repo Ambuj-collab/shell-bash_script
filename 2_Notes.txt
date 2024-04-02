@@ -242,6 +242,320 @@
 				You executed this command: ./luser-demo06.sh
 	
 	So, notice how ${0} expanded to how we executed the script, this dot forward slash and then the script name. Now, let's change how we call the script by providing the full path to the script.
-		/home/admin/luser-demo06.sh 
+		/home/vagrant/luser-demo06.sh 
 			output:
-				You executed this command: /home/admin/luser-demo06.sh
+				You executed this command: /home/vagrant/luser-demo06.sh
+				
+	First, let's prove that our script is not in our current PATH. We can do that using 'which' command
+		which luser-demo06.sh
+			output:
+				/usr/bin/which: no luser-demo06.sh in (/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/vagrant/bin)
+				
+	Now let's take a copy of our script(luser-demo06.sh) and place it into our PATH, by putting it into /usr/local/bin directory. 
+		sudo cp luser-demo06.sh /usr/local/bin
+		
+	Now, our script is in our PATH. So, we can execute it without supplying a path to the script.
+		which luser-demo06.sh
+			output:
+				/usr/local/bin/luser-demo06.sh 
+		
+		luser-demo06.sh 
+			output:
+				You executed this command: /usr/local/bin/luser-demo06.sh 
+				
+	Now notice what's stored in ${0}. It's the full path to the command which is /usr/local/bin/luser-demo06.sh, even though we only typed in luser-demo06.sh. At the command line, bash found it in our PATH and executed it at that path. That's why the full path to the command/program is stored in dollar sign zero.
+	
+	Before we move on, let's remove the script from our PATH.
+		sudo rm /usr/local/bin/luser-demo06.sh
+		hash -r
+				
+12) PATH environment variable:
+===================================
+	So, one thing I've glossed over is the command search path which is stored in the environment variable PATH. Up until this point, we've just been supplying either a full or relative path to the scripts we've created. Let's take a quick look at what the bash man page has to say about the PATH variable before we move forward.
+		man bash  -->  We'll do a forward search with a forward slash followed by PATH. We'll just keep hitting 'n' until we get to the PATH variable.
+			It says that PATH is a colon separated list of directories in which the shell looks for commands.
+			
+	Every time you type something in at the command line, bash first tries to find a function with that name and execute it. Now, we haven't covered functions yet but don't worry, we will. So, if it doesn't find a function with that name, it looks for that command in its list of builtin commands. If it is a shell builtin command, then it executes that. Now, you've been working with several builtin commands, such as echo, type, help and so on. Now, if the command you type at the command prompt or on the command line is not a function or it's not a shell builtin then bash searches through the list of directories defined in the PATH variable and executes the first match that it finds. If no match is found, then a command not found error message is displayed.
+		echo ${PATH} 
+			output:
+				/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/vagrant/bin 
+	
+	So, in our particular case here, if a command is not a function or a shell builtin then bash will look for that command first in /usr/local/bin then in /usr/bin. Then, it will look in /usr/local/sbin and so on down the list.
+	
+	It's important to point out that the PATH can be changed. So, it's not something that is guaranteed to be the same for every system. By the way, if you want to control the PATH, you can do so in your script by manipulating the PATH variable there.
+	
+	Let's use a neat little command called 'which' to tell us which command will be executed. Let's take the head command that we've used before.
+		which head 
+			output:
+				/usr/bin/head  --> So, this tells us that when we type in 'head' at the command line, the program located at /usr/bin/head will be executed.
+		
+		which help 
+			output:
+				which: no help in (/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/vagrant/bin)  --> because help is not a program. 
+		
+		type -a help  --> help is a shell builtin only 
+		
+	The first directory in our path variable is actually /usr/local/bin. So, let's create our own shell script named 'head' and place it in there. We'll need root privileges to do that. By the way, .sh extension is optional for bash script. So, no need to create head.sh, instead we can also create 'head'. So, I'm going to create the file with sudo 
+		sudo vim /usr/local/bin/head 
+		press 'i' for INSERT into the file 
+		
+		#!/bin/bash
+		echo 'Hello from my head.'
+		
+		sudo chmod 755 /usr/local/bin/head
+		
+	Now, head program is in 2 directories(/usr/local/bin and /usr/bin). Let's see which head will be executed.
+		which head 
+			output:
+				/usr/local/bin/head
+				
+	Let's use the '-a' option to 'which' command which forces it to print all matching executables that are in our path.
+		which -a head 
+			output:
+				/usr/local/bin/head
+				/usr/bin/head
+				
+	So, there are the two commands named the exact same thing. Both are named 'head' but the first one that is found is executed. So, let's go ahead and just execute this command. 
+		head 
+			output:
+				Hello from my head.
+	
+	Now, if you want to override the default then just supply the full path
+		/usr/bin/head -n1 /etc/passwd
+	
+	Let's get rid of the version of our head.
+		sudo rm /usr/local/bin/head
+		
+	Here is one little quirk(abrupt twist) with rapidly adding and removing programs from your PATH. Bash uses a hash table to remember the full path name of executable files. It(bash) looks up the location to the executable once and then remembers it. If you look at the 'type head' command, it says that head is hashed to '/usr/local/bin/head'
+		type head  --> output: head is hashed (/usr/local/bin/head)
+
+	That simply means that bash will execute that command(/usr/local/bin/head) at the path without first searching for that command. So, here's the quirk. Bash thinks that head is still located at /usr/local/bin/head. However, we just deleted it, just a few seconds ago. So, let's execute the command(/usr/local/bin/head) and see what happens.
+		head 
+			output:
+				-bash: /usr/local/bin/head: No such file or directory
+
+	So, if you run into this type of issue, you can make bash forget all these hashed locations by using the 'hash' shell builtin
+		hash -r 
+
+	Now, if we do 'type head', we can see that it searches the path and it finds the one that really is there
+		type head 
+			output:
+				head is /usr/bin/head
+				
+	Of course, you can read about the hash shell builtin with the command 'help hash' command.
+		help hash
+
+and user bin.
+
+
+13) basename command in Linux:
+==============================
+	There's a command called basename that removes the directory component and just returns the file name. So, let's read up about that 
+		man basename
+
+	So, let's see what happens when we execute this.
+		basename /home/vagrant/luser-demo06.sh
+			output:
+				luser-demo06.sh  -->  it just returns the file name without the directory portion of the file
+				
+	By the way, basename isn't doing any smart checking to see if the file exists. It just strips off the directory portion of a string that is passed to it. So, we can use the basename with something that clearly doesn't exist but it will still do its job.
+		basename /not/here
+			output:
+				here 
+				
+	The counterpart to the basename command is dirname.
+	
+14) dirname command in Linux:
+================================
+		man dirname
+	
+	This command(dirname) strips the last component(i.e., file name) from the path. 
+		dirname /vagrant/luser-demo06.sh 
+			output:
+				/vagrant  -->  '/vagrant' is returned because that is the directory name or the directory portion of that full path
+			
+	Like basename command, dirname doesn't do any smart checking. We can give it a non-existent path and it will simply return the portion that looks like the directory. 
+		dirname /this/is/not/here 
+			output:
+				/this/is/not
+				
+15) tree command in Linux:
+============================
+	If we want to display the directory structure using the simple 'tree' command without adding any option
+		tree  -->  Here 'tree' command will output the directory structure, starting from the current directory.
+		
+		tree <directory_path>  --> to display the folder structure of the specified directory 
+		
+16) Special parameters in bash script/shell:
+==================================================
+	Let's look at the bash man page real quick. We are looking for the 'special parameter' section of the page  
+		man bash  --> Forward Search(/) for 'Special Para' 
+	
+	#  -->  The thing I want to point out here is the pound(#) sign and the pound(#) sign says that it expands to the number of positional parameters. So, ${#} tells us how many arguments were supplied on the command line.
+	
+	@  -->  This parameter holds all arguments passed to the script and treat them as an array. So, ${@} gives an array containing all the arguments passed to the script
+	
+	*  -->  This parameter gives all arguments passed to the shell script separated by the space. If you want to treat all the parameters, separated by the space, as a single word/parameter then use ${*}.
+	
+		Note: 
+			However, the difference between ${*} and ${@} is only noticed when enclosing them in double quotation marks like "${*}" and "${@}". That difference is that "${*}" treats all the positional parameters as one string and "${@}" treats them as separate words.
+	
+	$i  -->  This parameter represents the ith argument passed to the shell script like $1(it expands to the first argument supplied on the command line), $2(it expands to the second argument supplied on the command line) and so on. 
+	
+	$0  -->  This parameter represents the script name.
+	
+	$?  -->  This parameter represents the exit status of the last command that executed.  The 0 code represents success and 1 represents failure. 
+	
+17) Passing argument, which contains space, to any script/program:
+=====================================================================
+	When an argument contains a space or spaces then enclosed that in double quotes to make it pass as a single argument
+		For example, ./luser-demo06.sh a b "c d e" f     --> here, you are passing 4 arguments(a, b, c d e and f)
+		
+	So, in reality, because they're enclosed in double quotation marks, they're treated as one argument. 
+		For example, ./luser-demo06.sh one "this whole thing is two" three   -->  passing 3 arguments
+		
+	I'm just going to use single quotation marks because that works too.
+		For example, ./luser-demo06.sh one 'this whole thing is two' three   -->  passing 3 arguments
+		
+	Another thing you can do is simply enclose everything in quotation marks, and that's fine as well.
+		For example, ./luser-demo06.sh 'one' 'this whole thing is two' 'three'   -->  passing 3 arguments
+		
+	Three arguments on the command line, which interprets to three positional parameters inside the script.
+		./luser-demo06.sh jason steve jan fred
+	
+18) for loop in bash script:
+================================
+	The idea behind this script(luser-demo06.sh under shellclass_scripts_by_udemy/demos) is that we're going to perform the same action over a list of items. Now, this is the perfect time to use a for loop. Let's take a second and look at the for shell builtin. 
+		type -a for   -->  for is a shell keyword. So, that's a shell builtin
+	
+	So, what we can do is get help for 'for'. I know that there's going to be a good bit of information scroll down to the screen. So, I'm just going to pipe this to the head command to get just the first ten lines of output.
+		help for | head 
+			output:
+				for: for NAME [in WORDS ... ] ; do COMMANDS; done
+					Execute commands for each member in a list.
+
+					The `for' loop executes a sequence of commands for each member in a
+					list of items.  If `in WORDS ...;' is not present, then `in "$@"' is
+					assumed.  For each element in WORDS, NAME is set to that element, and
+					the COMMANDS are executed.
+
+					Exit Status:
+					Returns the status of the last command executed.				
+	
+	The NAME you see in the help here is actually a variable name for each item in the list of words. The variable NAME is set to that item.
+	For example, in the below for loop, X is the variable name and we're going to provide a list of 3 names.
+	
+		for X in Frank Claire Doug
+		do 
+		  echo "Hi ${X}."
+		done
+		
+			output:
+				Hi Frank.
+				Hi Claire.
+				Hi Doug.
+				
+	If you want to, you can place this command(for loop) all on one line using the semicolons as the command separator.
+		for X in Frank Claire Doug; do   echo "Hi ${X}."; done 
+			output:
+				Hi Frank.
+				Hi Claire.
+				Hi Doug.
+				
+19) while loop in bash script:
+================================
+		type -a while  -->  while is a shell keyword. So, that's a shell builtin
+		help while 
+			output:
+				while: while COMMANDS; do COMMANDS; done
+					Execute commands as long as a test succeeds.
+
+					Expand and execute COMMANDS as long as the final command in the
+					`while' COMMANDS has an exit status of zero.
+
+					Exit Status:
+					Returns the status of the last command executed.
+	
+	for example,
+		while [[ "${X}" -eq 1 ]]
+		do
+		  echo "This is the value of X: ${X}"
+		  X=7
+		done 
+		
+			OR
+		
+		while [[ "${X}" -eq 1 ]]; do  echo "This is the value of X: ${X}";  X=7; done   
+		
+			output:
+				This is the value of X: 1
+	
+	Make sure that there is a space in between 'while' and 'double square brackets' and a space after the double square brackets.
+				
+20) true command in Linux:
+============================
+	I want to introduce you to the true command. It's only job is to return an exit status of zero. Let's see what type of command is true?
+		type -a true    -->  it's a shell builtin as well as a executable program on the Linux system 
+			output:
+				true is a shell builtin
+				true is /usr/bin/true
+				
+	Of course, we can get help on a built-in by using help command as well as we can get help on a program using man command. 
+		help true 
+		man true 
+			
+		true  --> run this command 
+		echo $?  
+			output:
+				0
+		
+		true blah  --> passing command line argument which will be ignored and returns 0 exit status 
+		echo ${?}	
+			output:
+				0
+				
+21) sleep command in Linux:
+==============================
+	'sleep' simply delays the execution for a specified amount of time.
+		type -a sleep   -->  sleep happens to be an executable program on the system. It's not a shell builtin.
+			output:
+				sleep is /usr/bin/sleep
+		
+	So we'll use the man page to learn more about sleep.
+		man sleep   
+		
+	You can use sleep followed by a number and a suffix and that suffix can be 's' for seconds, 'm' for minutes, 'h' for hours or 'd' for days. So, sleep does what it sounds like. It just sleeps. It doesn't do anything for a specific amount of time. Default suffix is 's'.
+		sleep 1  OR  sleep 1s 
+		sleep .5  OR  sleep 0.5  --> sleep for half a second 
+		
+22) Infinite loop in bash script:
+=====================================
+		while [[ true ]]
+		do 
+		  echo "${RANDOM}"
+		  sleep 1
+		done 
+	  
+	Now, to break out of this loop, all you have to do is hold down the control(ctrl) key and type C(i.e., ctrl + c). So, 'ctrl + c' sends an interrupt signal to the command which makes it stop. Now, this isn't something unique to the while command. You can use this to stop any command running in the foreground. For example, if you execute sleep and want to interrupt it and return to the command line sooner, you can use 'ctrl + c' there as well.
+	
+		sleep 10m  --> press 'ctrl + c' to interupt the execution
+		
+23) shift builtin in bash script:
+=====================================
+		type -a shift  -->  shift is a shell builtin
+		help shift
+			output:
+				shift: shift [n]
+					Shift positional parameters.
+
+					Rename the positional parameters $N+1,$N+2 ... to $1,$2 ...  If N is
+					not given, it is assumed to be 1.
+
+					Exit Status:
+					Returns success unless N is negative or greater than $#.
+		
+	Now, what the 'shift' command really does is that it removes the positional parameter from the list starting with ${1}. It just chops off ${1}. So, when you execute the 'shift' command, the value stored in ${1} is removed, it's just gone. What also happens is that, the value stored in ${2} shifts down to ${1}, ${3} replaces the value in ${2}, ${4} replaces the value in ${3}, so on and so forth. Also, the special parameter of $#/${#} is reduced by one. Now, as you remember, ${#} contains the number of arguments that were supplied on the command line. By default, 'shift' command shifts everything one place to the right. Executing 'shift' itself/alone is the same thing as executing shift 1. If you wanna shift everything by two places, use 'shift 2'. In that case, ${#} will be decreased by two. If you wanna shift everything by three positions, use 'shift 3' and so on.
+				
+	It might not be obvious when you would want to use the shift command beyond our while loop that we've demonstrated above. So, here are a couple of thoughts to keep in mind. One time shift comes in handy is when you want to have a user, supply information/arguments to your script and there is one argument or piece of data that can contain multiple words. For instance, data you would want to use in the 'comment' field/option(man useradd) when creating a user using 'useradd'. In this case, you would tell/ask the user to supply a username which would be ${1}. Then, you would 'shift' and then what is left over becomes the comments field i.e., ${1}, ${2}, ${3} and so on. That's one example.
+			
+		

@@ -16,6 +16,7 @@ echo "You supplied ${NUMBER_OF_PARAMETERS} argument(s) on the command line."
 # Make sure they at least supply one argument.
 if [[ "${NUMBER_OF_PARAMETERS}" -lt 1 ]]
 then
+  # echo the usage statement to tell the user/client about how to use this script/program on the command line. So here, we are telling that they need to supply a username and optionally they can supply many more usernames. All usernames should be space separated. 
   echo "Usage: ${0} USER_NAME [USER_NAME]..."
   exit 1
 fi

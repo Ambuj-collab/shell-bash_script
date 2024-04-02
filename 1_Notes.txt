@@ -435,7 +435,7 @@ in this file.
 	
 30) Taking input from user who is running your script:
 ===========================================================
-	One way to get input from a user is by using the 'read' shell builtin command which is what we're going to use in this script(luser-demo04.sh under shellclass/demos). Another way to get input from a user is to have them supply information on the command line as arguments to your script and you'll be learning about that method later on in the course. But for now, let's look at the read built-in.
+	One way to get input from a user is by using the 'read' shell builtin command which is what we're going to use in this script(luser-demo04.sh under shellclass_scripts_by_udemy/demos). Another way to get input from a user is to have them supply information on the command line as arguments to your script and you'll be learning about that method later on in the course. But for now, let's look at the read built-in.
 	
 	So as you already know, you can use the 'type' command to tell if a command is a shell builtin or if it's an actual file on the file system.
 		type read  -->  read is a shell builtin
@@ -513,7 +513,7 @@ in this file.
 		
 	If the first command displays error messages then those will not be passed to the second command. Those error messages are called standard error output. You'll learn how to control standard error output later in the course.
 	
-34) How to luser-demo04.sh shell script present under shellclass/demos directory?
+34) How to luser-demo04.sh shell script present under shellclass_scripts_by_udemy/demos directory?
 ======================================================================================
 	Because we're adding a user with this script, we need to run this script with root privileges.
 		sudo ./luser-demo04.sh
