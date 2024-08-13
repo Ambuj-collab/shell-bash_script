@@ -2,6 +2,8 @@
 
 # This script demonstrates the use of functions.
 
+# As a reminder, functions have to be defined before they are used, so a good practice is to put all your functions at the top of your script. The only things I would consider putting before the functions are constant global variables. Do not call a function before it's defined.
+
 log() {
   # This function sends a message to syslog and to standard output if VERBOSE is true.
 

@@ -23,7 +23,7 @@ echo
 echo "Contents of ${FILE}:"
 cat ${FILE}
 
-# Redirect STDIN to a program, using FD 0.
+# Redirect STDIN to a program, using FD(File Descriptor) 0.
 read LINE 0< ${FILE}
 echo
 echo "LINE contains: ${LINE}"

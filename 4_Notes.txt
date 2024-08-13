@@ -1,0 +1,99 @@
+1) Arithmetic expansion and Arithmetic evaluation:
+=====================================================
+	Let's say we want to add two numbers and assign the result to a variable. So, we can do this like this. We'll create a variable right here on the command line. We'll call it NUM and we'll follow that with dollar sign, opening parenthesis, opening parenthesis and then an expression, here, one plus two, and we'll close that with these double parentheses here.
+		NUM=$(( 1 + 2 ))
+	
+	So. this dollar sign, parenthesis, parenthesis, $((, syntax is called arithmetic expansion. Bash evaluates the arithmetic expression within the double parentheses and it returns or substitutes the answer in its place. So now NUM, the variable NUM, should contain the value of three and we can check it like so.
+		echo ${NUM}		-->  output: 3
+		
+		NUM=$(( 10 - 1 ))
+		echo ${NUM}		-->  output: 9
+		
+		NUM=$(( 2 * 4 ))
+		echo ${NUM}		-->  output: 8
+		
+		NUM=$(( 6 / 2 ))
+		echo ${NUM}		-->  output: 3
+		
+	Let's talk about this particular situation. So we'll do six divided by four and then Bash returns one. So six divided by four is actually 1.5 but again Bash just returned one to us. So here's what you need to know. Bash doesn't do any rounding, it just drops off the decimal point and anything after it. So really, Bash doesn't support floating point arithmetic/numbers. That's usually fine because what you'll end up doing most of the time is very simple math, like adding two numbers together or incrementing a number by one during a loop.
+		NUM=$(( 6 / 4 ))
+		echo ${NUM}		-->  output: 1
+		
+	If you need to work with numbers that contain a decimal then you're going to need to use an external program, such as bc, which stands for basic calculator. Now, it might not be installed by default. so if you do 'type -a bc' and you don't see it there then what you would need to do is to run 'sudo yum install -y bc' to install it. So let's get some help on 'bc' command.
+		bc -h 
+		
+	If you wanna do floating point math with 'bc' then you have to turn on the math libraries with the '-l' option. Also, it's important to know that 'bc' reads the standard input from standard output of the command before the pipe.
+		echo '6 / 4' | bc -l 
+			output:
+				1.50000000000000000000
+			
+	By the way, if you need a quick calculator at the command line, you can just run 'bc -l' and you will be entered into their command line. Now, you can perform mathematical calculations in their command line. 
+		6 / 4   -->  1.50000000000000000000	
+		1 + 2   -->  3
+	
+	You can press 'ctrl + d' to exit out of the calculator.
+	
+	You can also use awk to do this. It's a little bit more cumbersome but I'm just gonna show you quickly how to do it and you can stock it away if you want to use it at some time. Again, I don't necessarily recommend doing this but you may see this in other people's shell scripts.
+		awk 'BEGIN {print 6/4}'
+			output:
+				1.5
+				
+	Now let's get back to Bash. So six divided by four according to Bash is one. There is a remainder when you do six divided by four and you can get that remainder with the percent sign(%), also known as modulo, or the modulo operator. So we can do this, NUM equals six modulo four, that is going to be two. It prints two because six divided by four is one with two leftover or a remainder of two.
+		NUM=$(( 6 / 4 ))
+		echo ${NUM}		-->  output: 1
+		
+		NUM=$(( 6 % 4 ))
+		echo ${NUM}		-->  output: 2
+		
+	By the way, you don't have to use hard coded numbers like I've been doing here. You can also use variables inside the parentheses too. So we can do something like this. 
+		DICEA='3'
+		DICEB='6'
+		TOTAL=$(( DICEA + DICEB ))
+		echo $TOTAL     -->  output: 9
+		
+	You might have noticed here that I didn't use a dollar sign($) for DICEA or DICEB. Those are variables inside those double parentheses.
+	
+	By the way, you can change the value stored in a variable. Here, you don't need the leading dollar sign. That leading dollar sign is used for substitution but we don't want to substitute the command with its value, we just want to change the value a variable.
+		NUM='1'
+		(( NUM++ ))
+		echo ${NUM}   -->  output: 2
+		
+	Now let's decrement the value stored in the variable NUM by one.
+		(( NUM-- ))
+		echo ${NUM}   -->  output: 1
+		
+	Let's add a number to the value of a variable and store that new value in the same variable.
+		(( NUM += 5 ))
+		echo ${NUM}   -->  output: 6
+
+	You can also do things like '-=', '*=', '/=' and '%='. Now, if you wanted to, you could actually use substitution to change the value of the same variable.
+		NUM=$(( NUM += 5 ))
+		echo ${NUM}   -->  output: 11
+		
+2) let shell built-in:
+=========================
+	I wanna show you two other ways to perform math operations that you might encounter in other scripts. The first way is with a 'let' bash/shell built-in. You can see all the operators that are supported by this 'let' command on the help page.
+		type -a let   -->  output: let is a shell builtin
+		help let | less
+	
+	Now, this 'let' syntax pretty much does the same thing as using double parentheses.
+		let NUM='2 + 3'
+		echo ${NUM}   -->  output: 5
+		
+		let NUM++
+		echo ${NUM}   -->  output: 6
+		
+3) expr Linux executable:
+============================
+	The second way you'll see math performed in scripts is with the 'expr' command. The double parentheses syntax we've been using is built into Bash and that's the route I recommend if at all possible.
+		type -a expr  -->  output:  expr is /usr/bin/expr
+		
+	So the 'expr' command processes an expression given to it and then sends the result to standard output(i.e., STDOUT). 
+		expr 1 + 1   -->  output: 2
+	
+	Now, to do assignment, we just use command substitution like we would with any other command.
+		NUM=$(expr 2 + 3)
+		echo ${NUM}   -->  output: 5
+		
+	
+		
