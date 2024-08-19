@@ -95,5 +95,525 @@
 		NUM=$(expr 2 + 3)
 		echo ${NUM}   -->  output: 5
 		
+4) locate and find command in Linux:
+=========================================
+	In this lesson, you'll learn how to disable, delete and archive users on a Linux system. 
+	So far, we've been using the example of creating users as an excuse to learn all kinds of shell scripting concepts and techniques. From the last few lessons, I've actually been preparing you to write a script around deleting users. The main point isn't to have scripts that can create or delete users, it's to learn techniques that you can use in any shell script. 
 	
+	Having said that, you are going to write a script in the next assignment that will have you deleting users, so you need to know how to delete users. So let's go ahead and cover that now. The command to delete a user from the Linux system is userdel. 
+	
+	Now, if you use our normal type command as a regular user, you're probably going to get an error. So if I do this "type -a userdel", it says userdel not found.
+		type -a userdel
+			Output:  -bash: type: userdel: not found
+			
+	And let's see what happens with the which command, which userdel, and it says there is no userdel in the listed paths of PATH environment variable, and then it gives value of our PATH there.
+		which userdel
+			Output:  which: no userdel in (/home/admin/gcloudCLI/google-cloud-sdk/bin:/home/admin/.local/bin:/home/admin/bin:/usr/local/bin:/usr/bin:/bin)
+			
+		echo $PATH
+			Output:  /home/admin/gcloudCLI/google-cloud-sdk/bin:/home/admin/.local/bin:/home/admin/bin:/usr/local/bin:/usr/bin:/bin
+			
+	This tells us that there's no userdel in (/home/admin/gcloudCLI/google-cloud-sdk/bin:/home/admin/.local/bin:/home/admin/bin:/usr/local/bin:/usr/bin:/bin). It is our PATH that it's displaying there. So just as the which command tells us, the userdel command is not in our PATH. We talked about PATH earlier in the course. At this point, there really is two options. One, the userdel command really doesn't exist, or two, it in fact does exist, but it just exists outside of our current PATH. So I quickly wanna cover how to find a command that is not in your path because you may run into this from time to time.
+	
+	Now, most Linux systems have "locate" installed and configured. "locate" command in Linux is used to find the files by name. There are two most widely used file-searching utilities accessible to users called "find" and "locate". The locate utility works better and faster than the find command because instead of searching the file system when a file search is initiated, it would look through a database. This database contains bits and pieces of files and their corresponding paths on your system. By default, locate command does not check whether the files found in the database still exist and it never reports files created after the most recent update of the relevant database.
+	
+	The locate command searches an index that is created by the updatedb command. The updatedb command is typically scheduled to run once a day. This means that locate doesn't have/give, up to the minute information, but on the other hand, it's very fast. It finds things in that pre-created or pre-populated database or index.
+	
+	How to update the database used by locate?
+		The database used by locate is updated periodically via a scheduled job run by cron or systemd on most systems. However, if you have newly added files that you need to find immediately, you may manually update the database by running:
+			sudo updatedb
+			
+	So if we run "locate userdel", we'll get some results here.
+		locate userdel
+			Output: 
+				/usr/sbin/luserdel
+				/usr/sbin/userdel
+				/usr/share/bash-completion/completions/userdel
+				/usr/share/man/de/man8/userdel.8.gz
+				/usr/share/man/fr/man8/userdel.8.gz
+				/usr/share/man/it/man8/userdel.8.gz
+				/usr/share/man/ja/man8/userdel.8.gz
+				/usr/share/man/man1/luserdel.1.gz
+				/usr/share/man/man8/userdel.8.gz
+				/usr/share/man/pl/man8/userdel.8.gz
+				/usr/share/man/ru/man8/userdel.8.gz
+				/usr/share/man/sv/man8/userdel.8.gz
+				
+	And if we look at the result of our command(locate userdel), we can actually see that the command resides in /usr/sbin/userdel. That's actually where the command lives. Now, just to prove that locate isn't using real-time data, let's create a file called 'userdel' and then try to find it with locate command. So I'm just going to run "touch userdel" from the home directory.
+		pwd
+		  output:
+			/home/admin  --> home directory of admin user
 		
+		touch userdel
+		ls -l userdel
+		  output:
+			-rw-r--r-- 1 admin users 0 Aug 16 08:16 userdel
+			
+	Again, the touch command creates a file if it doesn't exist or if the file exists then it touches it and updates its timestamp. So sure enough, now, userdel is on our system and if we run locate userdel again then we don't see anything about admin home directory.
+		locate userdel
+			Output: 
+				/usr/sbin/luserdel
+				/usr/sbin/userdel
+				/usr/share/bash-completion/completions/userdel
+				/usr/share/man/de/man8/userdel.8.gz
+				/usr/share/man/fr/man8/userdel.8.gz
+				/usr/share/man/it/man8/userdel.8.gz
+				/usr/share/man/ja/man8/userdel.8.gz
+				/usr/share/man/man1/luserdel.1.gz
+				/usr/share/man/man8/userdel.8.gz
+				/usr/share/man/pl/man8/userdel.8.gz
+				/usr/share/man/ru/man8/userdel.8.gz
+				/usr/share/man/sv/man8/userdel.8.gz
+
+	So if we force an index/database update, we should be able to find that userdel file that we placed into admin's home directory by using the touch command. And by the way, to run "updatedb" command, you need root privileges because what it does is, it takes the snapshot of the entire file system and you don't have permissions to every single file as a regular user, such that admin is. So we'll run, sudo updatedb and once that is done, now we can do locate userdel.
+		sudo updatedb
+		locate userdel
+			Output: 
+				/home/admin/userdel
+				/usr/sbin/luserdel
+				/usr/sbin/userdel
+				/usr/share/bash-completion/completions/userdel
+				/usr/share/man/de/man8/userdel.8.gz
+				/usr/share/man/fr/man8/userdel.8.gz
+				/usr/share/man/it/man8/userdel.8.gz
+				/usr/share/man/ja/man8/userdel.8.gz
+				/usr/share/man/man1/luserdel.1.gz
+				/usr/share/man/man8/userdel.8.gz
+				/usr/share/man/pl/man8/userdel.8.gz
+				/usr/share/man/ru/man8/userdel.8.gz
+				/usr/share/man/sv/man8/userdel.8.gz
+				
+	Now, we can see /home/admin/userdel, that file we just created.
+	
+	While running locate command if you get something like 'command not found' then either you can install locate command on your Linux system or you can use find command.
+		sudo find / -name "userdel"   OR   find / -name "userdel" 2> /dev/null
+		
+	Let me take a step back. So I would first use the locate command and actually since I'm looking for a binary/program or an executable file, I would limit my search to only include things that are present in the bin directory. Let's now take the standard output of the locate command and send it as standard input to the grep command. The grep command displays whatever matches to a pattern and discards everything else.
+		locate userdel | grep bin
+			output:
+				/usr/sbin/luserdel
+				/usr/sbin/userdel
+	
+	So this really, really narrows it down for us. We see two possible options and obviously, the one at the bottom there i.e., /usr/sbin/userdel is what we're looking for. Sometimes the file you're looking for is not in a place where you have read permissions. The locate command honors those permissions. So if we do something like this, 'locate .bashrc' and hit ENTER, we only see /etc/skel/.bashrc and then the .bashrc in our home directory(/home/admin).
+		locate .bashrc
+			Output:
+				/etc/skel/.bashrc
+				/home/admin/.bashrc
+
+	Now let's run that same command with root privileges. Now we see all the .bashrc files on the system.
+		sudo locate .bashrc
+			Output:
+				/etc/skel/.bashrc
+				/home/brussell/.bashrc
+				/home/einstein/.bashrc
+				/home/isaac/.bashrc
+				/home/jlocke/.bashrc
+				/home/moore/.bashrc
+				/home/philapp/.bashrc
+				/home/tedison/.bashrc
+				/home/turing/.bashrc
+				/home/vagrant/.bashrc
+				/home/woz/.bashrc
+				/root/.bashrc
+				
+	Now we see all the .bashrc files on the system. As the admin user, we don't have permission to look inside root's home directory. For example, if we do this, 'ls -l /root/.bashrc', we get an error, permission denied. We can't look at anything in root's home directory by default. So if we use root permissions, we can now see the file.
+		ls -l /root/.bashrc
+			Output:
+				ls: cannot access '/root/.bashrc': Permission denied
+				
+		sudo !!  -->  to run the last command with sudo appending to it at the beginning
+			Output:
+				sudo ls -l /root/.bashrc
+				-rw-r--r-- 1 root root 2273 Aug 13 03:07 /root/.bashrc
+				
+	And by the way, the quick little thing that I did above, the double exclamation marks or bang bang actually represents the most recently executed command. So if you want to execute the most recent command with root privileges, use the shortcut 'sudo !!'. The command that will be executed actually gets displayed to the screen first and then any output generated by that command is displayed. So here we can see that 'sudo !!' expands to 'sudo ls -l /root/.bashrc' and then the output of that command follows.
+	
+	My point here is that sometimes you need to use root privileges to find a file because you do not have permissions to view that file as your own normal regular user..
+	
+	Now, Let's say 'locate' command isn't installed or configured. So what would you try next? Well, I would use my knowledge of the Linux file system hierarchy(i.e., FHS) and then start looking in places where the file might live. For example, if I'm looking for a configuration file, I would start looking in /etc folder, but since we're looking for an executable/program, also called a binary, I would look in bin(i.e, /bin) directory. So let's do this.
+		ls -ld /*bin
+			Output:
+				lrwxrwxrwx 1 root root 1846 Nov  7  2023 /bin -> usr/bin
+				lrwxrwxrwx 1 root root 4442 Nov  7  2023 /sbin -> usr/sbin
+				
+	So let's go ahead and look in /usr/bin and see if userdel is there. Nope, no such file or directory. 
+		ls -l /usr/bin/userdel
+			Output: ls: cannot access '/usr/bin/userdel': No such file or directory
+
+	And by the way, when you see no such file or directory, please believe it. It's telling you that the file doesn't exist or the file that you specified does not exist. Anyway, let's try it in /usr/sbin/userdel. Here, we didn't get an error. We got some valid ls output that shows us that the file does exist.
+		ls -l /usr/sbin/userdel
+			Output:
+				-rwxr-xr-x 1 root root 88824 Sep  5  2019 /usr/sbin/userdel
+	
+	Actually, I probably could have shortened up my search just a little bit here, because userdel is a system administration type of command. Now, system admin commands are usually found in sbin directories. Normal commands that all users can run are found in bin directories, for example, ls is a command that everyone needs, not just a system administrator, so it's found in /usr/bin.
+		ls -l /usr/bin/ls
+			Output:
+				-rwxr-xr-x 1 root root 134872 Dec 17  2018 /usr/bin/ls
+				
+	Unlike locate, find looks at files in real time, which makes it slower than locate, but yet up to date. There are a lot of options to the find command and I'm not going to go through each and every one of them, but here's just a very quick crash course and how to use the find command. Now, the format of the find command is find followed by the path to search in, followed by any options and expressions or search patterns. So let's look in the /usr/bin directory. So if you use find, follow that with a path and then hit ENTER. Here, it just lists all the files in that specified directory, because we haven't narrowed down our search. And by the way, it not only lists the files in that directory, it would list any files of any sub directories and any files within those sub directories and so on. To say it another way, find searches recursively.
+		find /usr/bin   -->  
+			Output: 
+				/usr/bin
+				/usr/bin/busybox-static
+				/usr/bin/gencat
+				/usr/bin/getconf
+				...
+				...
+				...
+				...
+				/usr/bin/odbc_config
+				/usr/bin/odbcinst
+				/usr/bin/slencheck
+				/usr/bin/rsql
+	
+	Now, let's tell it the name of the file we're looking for. So we can do this, find /usr/sbin/ and there's an option called -name and then we supply that with the name of the file we're looking for. We're looking for userdel.
+		find /usr/sbin -name userdel
+		
+	Okay, admittedly that was too easy, because we already knew where to find the userdel command and I was cheating a little bit there. But if you have no idea where the file exists, you can search the entire file system starting at the root(/). I don't necessarily always recommend this approach, especially if you're working on a system that has a lot of files on it, but it will work. So let's do 'find / -name userdel'.
+		find / -name userdel
+			Output:
+				find: ‘/etc/sysconfig/network/providers’: Permission denied
+				find: ‘/etc/skel/.config’: Permission denied
+				find: ‘/etc/skel/.local’: Permission denied
+				find: ‘/etc/ssl/private’: Permission denied
+				/etc/pam.d/userdel
+				...
+				...
+				...
+				...
+				find: ‘/tmp/vmware-root_888-2730562489’: Permission denied
+				find: ‘/tmp/systemd-private-070362e1ce7d49949b793fbdd05ad291-chronyd.service-RpHO9Q’: Permission denied
+				find: ‘/tmp/vmware-root_960-2999133023’: Permission denied
+				/usr/share/bash-completion/completions/userdel
+				find: ‘/usr/share/polkit-1/rules.d’: Permission denied
+				/usr/sbin/userdel
+				find: ‘/var/log/YaST2’: Permission denied
+				find: ‘/var/log/zypp’: Permission denied
+	
+	Here, we're seeing a lot of permission denied errors. There are two ways around this. One is just to send all those error messages to /dev/null so we don't have to look at them. And let's try that here now. So we know that error messages are displayed on standard error and standard error is represented by file descriptor 2.
+		find / -name userdel 2>/dev/nullfind 
+			Output:	
+				/etc/pam.d/userdel							
+				/usr/share/bash-completion/completions/userdel
+				/usr/sbin/userdel
+	
+	Now we don't get any of those error messages to our screen, because they were redirected into /dev/null which does nothing with them, it just throws them away. And we're left with all the matches to the userdel name without any of the errors. So in this particular case, we found the file that we're looking for, but what if the file we were looking for is really somewhere where we need root permissions or a place where our particular user does not have permissions to view? In that particular case you want to run the command as a root. So we can do this, sudo find / -name userdel.
+		sudo find / -name userdel
+			Output:	
+				/etc/pam.d/userdel							
+				/usr/share/bash-completion/completions/userdel
+				/usr/sbin/userdel
+				/root/userdel
+	
+	So at this point, we've proven that userdel exists, even if the 'type' and 'which' commands do not provide any information on those commands due to the settings of our PATH. However, 'userdel' will be in root's PATH. So I'm going to switch to the root user.
+		su -   --> switching to root user
+		type -a userdel
+			Output:
+				userdel is /usr/sbin/userdel
+				
+		which userdel
+			Output:
+				/usr/sbin/userdel
+				
+		exit  -->  to come out of the root user
+				
+	NOTE: Each user in Linux can have different PATH environment variable set. For each user, we get a different '.bashrc' file in the user's home directory where they can set the PATH environment variable.
+				
+5) !<starting_part_of_the_command>, !! and !$ in Linux:
+=========================================================
+	!command_starting_string  -->  Execute a command using a part of its string. 
+		For Example,
+			man cat
+			man cd
+			man history
+			!man   -->   recent/last command that starts with 'man' will be executed. In our case, 'man history' will be executed
+			
+	!!    -->   To quickly view and rerun the most recent command
+		For Example,
+			man cat
+			cd ~/ambuj
+			ls ~/ambuj
+			!!   --> 	the most recent/last command is 'ls ~/ambuj'. !! will run that
+			
+	!$  --> It refers to the last argument of the previous command
+			
+6) userdel command in Linux:
+===============================
+	Now let's find out how to actually use this userdel command. Again, since it's a file on the file system, we know we can use the man to get some information and help on this particular command. 
+		man userdel
+		
+	Briefly, the userdel command deletes a user account and related files. If we look forward here to the -f option, it stands for force, and it removes the account even if the user is logged in, and it also deletes the user's home directory even if that home directory is shared with another user. Normal user accounts don't share the same home directories usually, or they shouldn't. But in some cases, you might have multiple application accounts that share the same home directory. Now let's keep looking through the options here. The -r option is the one that we're most interested in, as it removes the user's home directory. So let's try out this userdel command. First, let's look at some users, which we have, on our local system here.
+		tail /etc/passwd  -->  The /etc/passwd file contains information about the users on the system.
+			Output:
+				vboxadd:x:997:1::/var/run/vboxadd:/bin/false
+				einstein:x:1001:1001: Albert Einstein:/home/einstein:/bin/bash     -->  first 1001 is the user id(UID) and second 1001 is the group id(GID) 
+				isaac:x:1002:1002: Isaac Newton: /home/isaac:/bin/bash
+				tedison:x:1003:1003: Thomas Edison:/home/tedison:/bin/bash
+				jlocke:x:1004:1004: John Locke: /home/jlocke:/bin/bash
+				brussell:x:1005:1005: Bertrand Russell:/home/brussell:/bin/bash
+				philapp:x:1006:1006: Philosophy Application User:/home/philapp:/bin/bash
+				turing:x:1007:1007: Alan Turing: /home/turing: /bin/bash
+	
+	We can see, we have Einstein, Isaac, T Edison, J Locke, etc, and these are all accounts that were created through previous exercises and through some of my previous work I've been doing on this virtual machine. Let's delete the Einstein user, sudo userdel einstein, and hit enter. Now if we run 'id' command against the einstein user, it'll say, hey, there is no Einstein user available.
+		sudo userdel einstein
+		id einstein
+			Output:  id: ‘einstein’: no such user
+
+	So sure enough, the userdel command got rid of Einstein, and let's look in the home directory.
+		ls -l /home
+			Output:
+				drwxr-xr-x 2 brussell brussell 4096 Aug 17 03:20 brussell 
+				drwxr-xr-x 2     1001    1001 4096 Aug 17 03:20 einstein
+				drwxr-xr-x 2 isaac    isaac    4096 Aug 17 03:20 isaac
+				drwxr-xr-x 2 jlocke   jlocke   4096 Aug 17 03:20 jlocke
+				drwxr-xr-x 2 moore    moore    4096 Aug 17 03:20 moore
+				drwxr-xr-x 2 philapp  philapp  4096 Aug 17 03:20 philapp
+				
+	So this really proves to us that running userdel without any options removes the user but leaves their files. Because you can see here the einstein directory is still listed in /home. This might come in handy if you want access to a user's files after they have been removed. Now, there's something else to notice here. Notice that the user and group for the Einstein's home directory are actually numbers. This is because there's no account associated with UID 1001 any longer because we deleted that account, that had the UID of 1001, which is the Einstein account. So if you ever run an 'ls' command and see numbers where you would normally see a user, then just think that you're looking at a UID or GID and that there is no account associated with that particular UID or GID. So while we're talking about UIDs, let's look at a couple of users. The 'root' user always has the UID of zero. So if we do 'id -u', which returns a user ID, follow that with a root account, we should always get back zero.
+		id -u root
+			Output:
+				0
+
+	Now, there are some other accounts on the system that are considered to be system accounts or application accounts. Let's look at another one of those. Let's look at the 'sshd' account.
+		id -u sshd
+			Output:
+				74
+	
+		id -u  --> to get the uid of the current user(i.e., admin user)
+			Output:
+				1000
+				
+	So I don't know if you notice a pattern here, but really, system accounts have lower UIDs. This is actually set in a file called 'login.defs', and that's located in '/etc' folder. So let's just look at that really quickly.
+		vi /etc/login.defs
+			Output:
+				......
+				......
+				#
+				# Min/max values for automatic uid selection in useradd(8)
+				#
+				UID_MIN                  1000
+				UID_MAX                 60000
+				# System accounts
+				SYS_UID_MIN               201
+				SYS_UID_MAX               999
+				......
+				......
+				
+	Here we see UID min, UID max. So these are the minimum and maximum values for automatic UID selection when executing useradd command. So when you create the very first user on a Linux system, it's going to have a user ID of 1000. And by the way, that is the user ID of our admin user because that was the first account created on the system. Then the next time when we add an account, the number will get incremented by one. So Einstein was the next account that was created. So it had a UID of 1001 and so on. By the way, if you look below this, you see SYS UID min and SYS UID max. This means that the maximum user ID for a system account or what's considered a system account is 999. If you wanna make sure that you're not deleting a very important account, perhaps it's a good idea to check its UID first. If it's less than a thousand, then clearly be careful of what you're doing because it could operate a service that you may need on your server. 
+	
+	Let's move on to our next user and let's delete this user but this time remove its home directory.
+		id -u isaac
+			Output:
+				1002
+				
+		sudo userdel -r isaac  --> -r option removes the home directory
+		id -u isaac
+			Output:  id: ‘isaac’: no such user
+			
+		ls -l /home/isaac
+			Output:	 ls: cannot access '/home/isaac': No such file or director
+				
+7) tar, gzip and gunzip commands in Linux:
+=============================================
+	Let's say we want to archive or store a user's home directory just in case we need it. One way to do that would be with a tar command. The Linux ‘tar’ stands for tape archive, which is used to create Archive and extract the Archive files. 
+		type -a tar
+			Output:
+				tar is /usr/bin/tar
+	
+	It shows that it's a file on the file system which is executable here in the /usr/bin directory, and let's look at the man page for this command.
+		man tar
+		
+	Here, you will see/learn how to create an archive, how to view the contents of an archive, and how to extract an archive. So the -c option is used to create an archive. The -f option allows you to specify the file name of the archive file. The -t option is to list the contents of an archive. The -v option is for verbose. And the -x option is for extract. So let's try this command out. And by the way, if you want to get details on those, of course, it's a good idea to have a look at the man page. First, let me create a directory and some files in there so we have something to play with and something to create an archive with.
+		mkdir catvideos
+		touch catvideos/admiral-catbar.mp4
+		touch catvideos/darthpaw.mp4
+		touch catvideos/luke-claw-walker.mp4
+		touch catvideos/obi-wan-catnobi.mp4
+		touch catvideos/padme-amikitty.mp4
+		
+		ls -l catvideos/
+		
+	So if we look in our catvideos directory, we have some empty files that were created with the touch command. Now let's go ahead and create an archive of this catvideos. -c to create, -f to specify a file.
+		tar -cf catvideos.tar catvideos
+		ls
+		 Output:
+			catvideos catvideos.tar	
+			
+	Now let's look at the contents of that archive.
+		tar -tf catvideos.tar
+			Output:
+				catvideos/
+				catvideos/admiral-catbar.mp4
+				catvideos/darthpaw.mp4
+				catvideos/luke-claw-walker.mp4
+				catvideos/obi-wan-catnobi.mp4
+				catvideos/padme-amikitty.mp4
+				
+	If you wanted to see the files as they were being added to the archive, you can use the verbose option. So let's go ahead and just delete this tar file now.
+		rm *tar   -->  delete the tar files 
+		tar -cvf catvideos.tar catvideos
+			Output:
+				catvideos/
+				catvideos/padme-amikitty.mp4
+				catvideos/darthpaw.mp4
+				catvideos/luke-claw-walker.mp4
+				catvideos/admiral-catbar.mp4
+				catvideos/obi-wan-catnobi.mp4
+	
+	So this time, instead of silently creating our tar file the -v option allowed us to see what was being added to our archive when it was happening. Let's go ahead and just create a restore directory, switch into that directory.
+		mkdir restore
+		cd restore
+		tar -xf ../catvideos.tar   -->  no output
+		ls
+		 Output:
+			catvideos  --> folder after extraction
+		ls catvideos/
+		 Output:
+			admiral-catbar.mp4   darthpaw.mp4   luke-claw-walker.mp4   obi-wan-catnobi.mp4   padme-amikitty.mp4
+			
+		rm -rf c*
+		ls   --> no output
+		
+	So this time let's use the verbose option while extracting to see exactly what we're extracting. And this is typically what I like to do. 
+		tar -xvf ../catvideos.tar
+			Output:
+				catvideos/
+				catvideos/padme-amikitty.mp4
+				catvideos/darthpaw.mp4
+				catvideos/luke-claw-walker.mp4
+				catvideos/admiral-catbar.mp4
+				catvideos/obi-wan-catnobi.mp4
+	
+	This shows that it has created the directory catvideos first and then put those several files within that directory.
+		rm -rf cat*
+		cd ..
+		rm *tar
+	
+	One of the common things that people do with archives is actually compress them to save some disk space. Now this can be a two step process like so. Let's create a catvideos.tar file and then let's gzip it.
+		tar -cvf catvideos.tar catvideos/
+			Output:
+				catvideos/
+				catvideos/padme-amikitty.mp4
+				catvideos/darthpaw.mp4
+				catvideos/luke-claw-walker.mp4
+				catvideos/admiral-catbar.mp4
+				catvideos/obi-wan-catnobi.mp4
+			
+		gzip catvideos.tar
+		ls
+		 Output:
+			catvideos	catvideos.tar.gz	restore
+			
+	By the way, the gzip command compresses the original file and appends a .gz to the end of the file name. So if you see a file that ends in tar.gz, it's a compressed archive. Now to decompress or uncompress a gzip file use gunzip.
+		gunzip catvideos.tar.gz
+		ls  (You can also run 'ls -l')
+		 Output:
+		    catvideos	catvideos.tar	restore	
+	
+	Now we have our uncompressed original tar file back. Let's go ahead and delete that. You can perform the compression while archiving itself if you use the -z option to the tar command. 
+		rm *tar
+		tar -zcvf catvideos.tar.gz catvideos/   -->  -z option for compress, -c is for create archive, -v is for verbose, -f is for specifying the resultant file name 
+			Output:
+				catvideos/
+				catvideos/padme-amikitty.mp4
+				catvideos/darthpaw.mp4
+				catvideos/luke-claw-walker.mp4
+				catvideos/admiral-catbar.mp4
+				catvideos/obi-wan-catnobi.mp4
+				
+		ls  (You can also run 'ls -l')
+		 Output:
+		    catvideos	catvideos.tar.gz	restore
+	
+	And if we want to view the contents of a compressed archive, we also need the -z option.
+		tar -ztvf catvideos.tar.gz
+			Output:
+				catvideos/
+				catvideos/padme-amikitty.mp4
+				catvideos/darthpaw.mp4
+				catvideos/luke-claw-walker.mp4
+				catvideos/admiral-catbar.mp4
+				catvideos/obi-wan-catnobi.mp4
+				
+		rm *gz
+		
+	Sometimes people like to use the file extension of .tgz to represent a compressed archive. So it's just something to keep in mind that .tar.gz and .tgz are really the same thing.
+		tar -zcvf catvideos.tgz catvideos
+		ls  (You can also run 'ls -l')
+		 Output:
+		    catvideos	catvideos.tgz	restore
+			
+	Let's go ahead and restore this compressed archive. We'll go into our restore directory and there's nothing in our folder.
+		cd restore/
+		ls   -->  no output
+		
+		tar -zxvf /home/admin/catvideos.tgz
+			Output:
+				catvideos/
+				catvideos/padme-amikitty.mp4
+				catvideos/darthpaw.mp4
+				catvideos/luke-claw-walker.mp4
+				catvideos/admiral-catbar.mp4
+				catvideos/obi-wan-catnobi.mp4
+		
+		ls  (You can also run 'ls -l')
+		 Output:
+		    catvideos
+		
+		ls -l catvideos/
+		
+	I wanna point out something that's kind of important here. The tar command, really like most Linux commands, treats you like a knowledgeable, sane, responsible adult. So it will happily override anything in its way. It assumes you know what the heck you're doing. So let's add some text to a file, just to change it up a little bit. So let's just put some text in here into our darthpaw.mp4 file under catvideos directory.
+		echo 'hello' > catvideos/darthpaw.mp4
+		cat !$
+			Output:
+				cat catvideos/darthpaw.mp4  -->  you can see that !$ is expanded to the last thing/argument from our previous command(i.e., catvideos/darthpaw.mp4)
+				hello
+		
+	And if we cat the contents of that file, we'll see it says what we redirected into it. By the way, !$ takes the very last argument from the previous command and places it on the current command. So again, we're using what's called EVENT DESIGNATORS in bash and it displays the entire command that's gonna be executed and then it displays the result of that command. Let's go ahead and extract this compressed archive again.
+		tar -zxvf /home/admin/catvideos.tgz
+			Output:
+				catvideos/
+				catvideos/padme-amikitty.mp4
+				catvideos/darthpaw.mp4
+				catvideos/luke-claw-walker.mp4
+				catvideos/admiral-catbar.mp4
+				catvideos/obi-wan-catnobi.mp4
+
+	Let's execute the most recent command that starts with c, which is cat.
+		!c
+		 output:
+			cat catvideos/darthpaw.mp4   --> there is nothing the in the output of this command, so file is empty
+		
+		cat catvideos/darthpaw.mp4  --> no output
+		
+		ls -l !$
+			Output:
+				ls -l catvideos/darthpaw.mp4
+				-rw-rw-r--  1  admin  admin  0  Aug 18  17:35  catvideos/darthpaw.mp4
+				
+	And if we 'cat catvideos/darthpaw,mp4', nothing is returned. And if we look at a long format listing of that file, it now has a file length of zero. So nothing is in it, which is the original file, or the file that was in the archive. So, tar, just overwrote the file. It didn't ask for a confirmation or anything like that. It didn't give you a warning, it just went ahead and overwrote the file. So be very careful when you're extracting compressed archives and just be conscious of what you're doing.
+	
+	This also goes without saying, but tar relies on file permissions like any other command does. So if you try to create an archive of files that you don't have permissions to, well that's just not gonna work. Also, if you try to extract the contents of an archive to somewhere where you don't have permissions to, that's not going to work either. So if you wanna be sure you have permissions, use sudo or become the root user first.
+	
+	For example, let's say you want to back up the contents of the /etc directory that contains pretty much all of your configuration files on the system. You'll need root privileges to do that because there are some files in /etc that a normal user just does not have access to. So let's get back to our home directory.
+		cd ..
+		sudo tar -zcf etc.tgz /etc
+			Output:
+				tar: Removing leading '/' from member names   -->  this is not an error, compressed archive would be created
+	
+	Here, as you can see, I didn't use the verbose option, mainly because I wanted you to see this particular message. tar says I'm removing the leading forward slash('/') from member names. If we look at the contents of the archive, we'll see that there is no leading slash either. So we'll run this, 'tar -ztvf etc.tgz'. So we can see the last file there, etc/nanorc is not /etc/nanorc, it's just etc/nanorc. This allows you to extract the contents of the archive into a different location without overriding all the existing files. So if it preserved the leading slash, /etc/nanorc, if you tried to extract this archive, then it would overwrite that file and that may be not what you want to do. For example, maybe you want to extract this into a different subdirectory and then compare the contents of that archive or that backup to what is currently on disk, instead of just blowing right over it and overriding it right away.
+				
+	tar command is removing the '/' because if it doesn't remove then folder named '/etc' will be created in the archive. Folder name can't have '/' because '/' is a file/directory separator. 
+		tar -ztvf etc.tgz 
+		
+	There is one more thing I'd like to talk about the tar command. Now, you may have seen people leave off the leading hyphen and do things like this, 'tar zcvf catvideos.tgz catvideos/'. So this is an older type of syntax that is still supported, so I just want you to be aware of it. If you use this old option syntax, all the options must be written together as a single clumped set without spaces separating them or dashes preceding them. Also, this set of letters must be the first to appear on the command after tar itself. Old options cannot appear anywhere else. They must immediately follow tar with some white space. The letter of an old option is exactly the same letter as the corresponding short option. For example, the old option t is the same as the short option dash t.
+		
+	When options require an argument, those arguments have to be presented in the same order. This can get pretty confusing if you use multiple options that have an argument. So instead of worrying about how to do it correctly, honestly my advice is to simply use a hyphen before your options. That way you can do things like this below.
+		tar -f catvideos.tar -c -v catvideos
+	
+	If we wanted to do it with the quote old style syntax, we'd have to do this like below.
+		tar cvf catvideos.tar catvideos    -->  this works.
+
+	But we cann't do something like this below because what it's gonna try to do is interpret c and v as files that are to be added to the archive and not as options.
+		tar f catvideos.tar c v catvideos
+

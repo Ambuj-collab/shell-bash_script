@@ -1,0 +1,455 @@
+1) chage command in Linux:
+============================
+	 let's cover how to disable, or how to lock an account without actually deleting it. Let's say you have someone who's going on an extended vacation or taking a leave of absence. You want them to use their account when they get back, but you also know that for every account that exists on a system, there is a chance that someone could break into that account. Since this person is going to be away for a long time, no one may actually notice if the account is being used by someone who should not have access to it. So let's say you decide to go ahead and lock that account for security reasons. The best way to do this is to actually use the 'chage' command. Actually, you can think of it as the change age command. So let's look at the man page for this command.
+		man change 
+	 
+	I'm gonna page down here till we get to the -E option, and that's the option to expire an account. It says you can specify either a date(as YYYY-MM-DD), or the number of days since January 1st, 1970 on which the user's account will be logner be accesible. It also says to unexpire the account use negative one or dash one or hyphen one as the argument to the -E options. So let's go ahead and try this out. 
+		id woz
+		  Output:
+			uid=1008(woz) gid=1008(woz) groups=1008(woz)
+			
+	So we have a user on the system called "woz", this user has a UID of 1008. If we change/switch to this user, let's see if it's working here.
+		[admin@linux-68y0 ~]$ su - woz   --> admin is the logged-in user, linux-68y0 is the hostname of the Linux system
+		Password:  -->  Enter the password of the 'woz' user
+		[woz@linux-68y0 ~]$ exit   -->  you can see the current user is 'woz' after switching. Type exit to go back to the admin user
+			Output:
+				logout
+		
+	So, let's expire this account.
+		[admin@linux-68y0 ~]$ sudo chage -E 0 woz
+		
+	Now let's try to switch to the account.
+		[admin@linux-68y0 ~]$ su - woz
+		Password:  -->  Enter the password of the 'woz' user
+			Output:
+				Your account has expired; please contact your system administrator
+
+	And sure enough, it says, "Hey, your account has expired. Please contact your system administrator".  So as we learn from the man page, we can actually unlock this account with '-E -1'. So we'll do sudo change the age of the expiration to negative one on the account of woz. Now let's see if we can log into this account. And sure enough we can, and it shows there's been one failed login attempt since we logged in while the account was locked.
+		[admin@linux-68y0 ~]$ sudo chage -E -1 woz
+		[admin@linux-68y0 ~]$ su - woz
+		Password:  -->  Enter the password of the 'woz' user
+			Output:
+				Last login: Tue Jan 23 17:55:09 EST 2018 on pts/0
+				Last failed login: Tue Jan 23 17:55:31 EST 2018 on pts/0
+				There was 1 failed login attempt since the last successful login.
+		[woz@linux-68y0 ~]$ exit
+			Output:
+				logout
+				
+	Some older methods of locking account include using the -l option to 'passwd' command, something like below.
+		sudo passwd -l woz
+			Output:
+				Locking password for user woz.
+				passwd: Success
+	
+	And then to unlock it you would use -u option to 'passwd' command.
+		sudo passwd -u woz
+			Output:
+				Unlocking password for user woz.
+				passwd: Success
+				
+	Now locking an account with the 'passwd' command like above does not prevent a user authenticating with an SSH key. That's very important to know, especially since more and more we're using SSH key as our primary method of authentication. So if you're using SSH key-based authentication, then this is not going to do what you think it's going to do, so don't do it. Use 'chage' instead.
+	
+	Another method is to set the user's shell to something that is actually not a shell or something that simply exits. To look at the available shells on a Linux system, you can look at the /etc/shells file. In Linux, the file /etc/shells is commonly used to store a list of installed valid login shells on the system. This file helps in identifying which shells are available for users to set as their default shell using commands such as 'chsh'.
+		cat /etc/shells
+			Output:
+				/bin/sh
+				/bin/bash
+				/sbin/nologin
+				/usr/bin/sh
+				/usr/bin/bash
+				/usr/sbin/nologin
+				
+	We can see here, there's nologin, /usr/sbin/nologin and /sbin/nologin. Those would in theory, prevent someone from logging in. This prevents the user from logging in to the system. So let's do that now, we'll set the default shell of the woz user to be nologin with a 'usermod' command. -s is to specify the shell.
+		grep woz /etc/passwd
+			Output:
+				woz:x:1008:1008:Test user:/home/woz:/bin/bash
+		
+		sudo usermod -s /sbin/nologin woz
+		grep woz /etc/passwd
+			Output:
+				woz:x:1008:1008:Test user:/home/woz:/sbin/nologin
+
+	I think I've covered enough in this lesson so I'm not going to take another diversion and cover the 'usermod' command. So if you wanna learn more about how to change all the settings for an existing account/user, simply read the usermod man page. At first glance, you think that this might actually work because if you SSHing and you have nologin set as your shell, you'll get immediately logged out of the system. It does work for interactive logins like I just described, but you can still do some things with SSH that don't require an interactive login or don't require a shell, such as port forwarding. So again, use the 'chage' command with '-E 0' option to actually disable the account.
+	
+2) Bash script that deletes a user account:
+==============================================
+	Refer to the bash script luser-demo12.sh under shellclass_scripts_by_udemy/demos. Since we're doing some system administrator type stuff/tasks, we wanna make sure the user is executing the script with root privileges, we already know how to do this check. If the user ID is not equal to zero that means they are not the root account. So let's give them a little message here and let's redirect that to standard error and exit from the script.
+	
+	By the way, you could use ${1} throughout the script, that would be acceptable. I just like to have a descriptive variable name. 
+		chmod 755 luser-demo12.sh  --> make it executable
+		tail -1 /etc/passwd   -->  let's get the last user in the /etc/passwd file on this particular system
+			Output:
+				moore:x:1009:1009:Gordon Moore:/home/moore:/bin/bash
+		
+		sudo ./luser-demo12.sh moore
+			Output:
+				The account moore was deleted.
+				
+		id moore
+			Output:
+				id: moore: No such user
+				
+	Let's do something interesting like try to delete an account that doesn't exist.
+		sudo ./luser-demo12.sh jason
+			Output:
+				userdel: user 'jason' does not exist
+				The account jason was NOT deleted.
+
+3) usermod command in linux:
+===============================
+	usermod command or modify user is a command in Linux that is used to change the properties of a user in Linux through the command line. After creating a user we have to sometimes change their attributes like user group, user login name or home directory  etc. so in order to do that we use the Usermod command.
+	To add a comment for a user. The below command will add a comment about the user or a short description related to the user. 
+		sudo usermod -c "This is test user" test_user
+		sudo cat /etc/passwd | grep test_user
+			Output:
+				test_user:x:1002:1002: This is test user:/home/test_user:/bin/bash 
+				
+	To change the home directory of a user. The below command will change the home directory of the user to /home/manav. 
+		sudo usermod -d /home/manav test_user
+		sudo cat /etc/passwd | grep test_user
+			Output:
+				test_user:x:1002:1002: This is test user:/home/manav:/bin/bash 
+				
+	To change the group of a user. The below command will change the group of user “test_user” from test_user to manav
+		sudo usermod -g manav test_user
+		id test_user
+			Output:
+				uid=1002(test_user) gid=1000(manav) groups=1000(manav)
+				
+	To change user login name. The below command will change the login name of the user “test_user”.
+		sudo usermod -l test_account test_user
+		id test_account
+			Output:
+				uid=1002(test_account) gid=1000(manav) groups=1000(manav)
+				
+		id test_user
+			Output:  id: 'test_user': no such user
+
+4) Find the Current Shell in Linux:
+======================================
+	echo $SHELL   -->  this displays the current shell for the logged-in user
+		Output:
+			/bin/bash
+
+5) Linux script for Deleting and Disabling Linux Accounts:
+==============================================================
+	In the previous exercises, you have been writing scripts to do things like add users. Well, now it's time to do the opposite. We're gonna write a script that deletes users, and actually this particular script not only deletes users, it can disable them and it can archive a user's home directory. So the first thing of course we need to do is come up with a little requirements document, if you will, and figure out what in the world do we want our script to do? 
+	
+	Refer to Exercise-05-Deleting-Local-Users-04.pdf requirement document under shellclass_scripts_by_udemy/exercises to know what we want our script to do, how we want it to be operated and how we want it to look like. Refer to disable-local-user.sh bash script to delete/disable the user account under shellclass_scripts_by_udemy/exercises.
+	
+	Since we're doing some system administration type stuff, like the deteting users or disabling them, we need to make sure that whoever's executing this script has root privileges or super user privileges. we're gonna follow the good Linux programming conventions while writing the script. We also decided to use disable the account as the default action for this script. Now, if a user does something interesting like supply an option that we don't account for, then we're going to give them that usage statement and exit as well. We've also decided to make it a little bit easier for the end users that are gonna be running this script, they can supply, you know, one user, two users, or whatever many users they want, at the command line. So if they wanna delete seven users, well they can supply all seven users at once on the same command line. And this script will simply loop through them all and perform the exact same action against all those users. So if a user supplies the -d option and seven accounts, well it's gonna delete all seven of those accounts. Speaking of deleting accounts, we don't want someone to do something interesting like delete the root account(or any other system account) and make our system unusable. We know that typically system accounts have a user ID less than 1000. So let's just put a little check for that in our script and we'll exit saying, Hey, we're not gonna do that. If a system account needs to be deleted, well give that task over to a system administrator and let them do it manually. If we encounter an error along the way, either deleting or disabling or archiving the account or creating a directory or whatever, we're going to tell the user that we encountered a problem and then exit the script.
+	
+	To parse the command line options, we know that we can use 'getopts' in a while loop. We'll specify our optstring here, the options that we're going to accept, and we're going to accept 'd' to delete, 'r' to remove, 'a' to archive, and we'll use the variable OPTION. We'll check that OPTION in the case statement here. So if someone supplies 'd', let's set a variable called DELETE_USER and we'll just set that to true. And then later on in our script, we will check to see if DELETE_USER is true and if it is, then we'll delete the user.
+	
+	For -r option, I'm going to do something slightly different. If you recall, the 'userdel' command allows you to specify a '-r' option, which removes the user's home directory. So what we're going to do here is use this REMOVE_OPTION variable in the 'userdel' command when we get to that in this script. So if this is set to nothing or if the -r option is never supplied, then REMOVE_OPTION is going to evaluate to an empty string and nothing will be substituted in its place. And so then 'userdel' will be executed without this -r option. Now on the other hand, if someone does specify -r, then 'userdel' will be executed with -r.
+	
+	For -a option, we'll do something similar here that we did with the delete user option('-d'), which is if someone gives us -a, we will set the ARCHIVE variable to true and we'll just check for this ARCHIVE being true later in the script.
+	
+	And if they give us any other option, then we're going to tell them how to use our script and exit. 
+	
+	Notes aroung usage() function: 
+		As you remember, ${0} is always the name of the script. So now, we have some optional options that user can pass. So those options that are optional go in square brackets i.e., [] to signify that they are optional. Then we have a mandatory argument i.e., username, so we're not gonna put that in square brackets, but optionally we can have additional users that we can allow them to specify. And they can specify multiple ones(users), so we'll use an ellipsis(...) there.
+	
+	And now after we process/parse our options, let's just shift all those options out of the way. And then anything that's left over are going to be user accounts and then later we'll loop through those user accounts. So we wanna make sure that the user gives us at least one account to operate against, and if they don't, then that means they don't know what they're doing. So we're gonna give them some help.
+	
+	Now we're ready to loop through all the usernames that were supplied as arguments. I like to tell, to whoever's executing the script, what user we're processing or working on. Again, they may supply multiple users on the command line. We wanna make sure that we're not removing any system account. So we wanna get the UID of the user that we're processing.
+	
+	Before we do anything like delete a home directory, let's make sure we create an archive of it, if the user requested us to do that. Actually, I'm going to create a variable called ARCHIVE_DIR, which represents the archive directory. And I'm gonna use this multiple times in the script. So I think, what I'm gonna do is, put it(i.e., ARCHIVE_DIR variable) at the very top of the script, even before our 1st function i.e., usage(). And really what this is acting as, is a constant variable. You could even make it Read Only if you like. 
+		readonly ARCHIVE_DIR='/archive'
+	
+	So I'm gonna put it(i.e., ARCHIVE_DIR variable) at the top because this is the only thing that I can think of that we might want to adjust later on down the road. For example, if we wanna put these archives on another place in the file system, then we can just change this variable at the very top of our script, make that one small change and no change anywhere else and be good to go.
+	
+	So what this(i.e., if [[ ! -d "${ARCHIVE_DIR}" ]]) 'if' statement says is, if not exists directory ARCHIVE_DIR then we need to create it, okay, so how did I get that exclamation point('!')? Well, you know that, the things in double square brackets are 'test' and you know that we can get information on the 'test' by using 'help test' on the command line. 
+		help test
+	
+	And if we look at that, it gives us a list of tests. And you can see here that '! expr' means true if expression is false. So you can think of that as negating the expression, or you can think of the exclamation mark as not. So that's from where I got that.
+	
+	By the way, I'm using the -p option to the mkdir command(i.e., mkdir -p ${ARCHIVE_DIR}) because if we have a archive directory that has multi level sub directories, for example, we could have something like /archive/users/homedir/ or whatever, and if the parent directory or parent directories(i.e., /archive/users) don't exist, then we need to create them first. And that's what that -p option does to the mkdir command. It creates parents, if it doesn't available. So in our particular case, we're just using /archive, so it doesn't matter. But if we change that variable at the beginning of our script to something that does include multi-level sub directories, then we'll need to use the -p. So if the mkdir command fails, then that's gonna mean that we can't put any of the archives we create in that directory because that directory didn't exist and wasn't able to be created as well. So we're gonna bail on our script here. So let's do another check. So we'll check the return status of mkdir, if it's anything but not zero, we have a problem.
+	
+	So now we know that the archive directory(i.e., ARCHIVE_DIR) exists, let's go ahead and archive the user's home directory and move it into that directoryi.e., ARCHIVE_DIR). Now, by default, normal user accounts have home directories that live in /home. So if we have a Jason account, then my home directories is gonna be /home/Jason. Now, if you have an application account or a system account, that's probably gonna live somewhere else in the file system. For example, the home directory of root user is /root, there is an application account and it's home directory might be /var/securedata, /www for a web user or something like that. So here we're also using this convention to be another safeguard. If an account doesn't have a home directory in /home, then it's probably a system or an application account. And at that point, we probably want a system administrator to look at it and manually do it. On the other hand, we could have made the decision that we're just going to archive the proper home  directory and delete it no matter where it lives on disk or create an archive of it no matter where it lives on disk.
+	
+	Then we have our check about the home directory. So if the home directory does exist, and that's a good sign, we'll go ahead and make our archive. We're gonna compress it, so that's a -z option, -c to create an archive, -f is the location of the archive file, then the path to archive, which is the home directory. 'tar' program/command is gonna to give some output and/or error, so we're just gonna send that to /dev/null(i.e., '&>/dev/null'  -->  this means '1>/dev/null 2>/dev/null'). We don't want the end user to see any output created by tar command, it's just gonna be distracting to them. But we do wanna make sure that tar command executes successfully. So if tar command exits with a non-zero exit status, we'll say we couldn't create the archive and then we will also exit with a non-zero exit status.
+	
+	So here's what(i.e., userdel ${REMOVE_OPTION} ${USERNAME}) I was talking about earlier with this ${REMOVE_OPTION}. So if we're going to delete a user, we need to use the userdel command. Additionally, if we want to delete the user's home directory, we need the -r option. So if they give us a -r option, we store that in ${REMOVE_OPTION}. Now here, ${REMOVE_OPTION} will evaluate to -r if they supply -r, or it will evaluate to an empty string(In that case, it's just gonna be like userdel  <username>), which is going to give us the exact result that we want. So that is one way to handle this kind of situation. There are other ways, but this is a pretty simple way to do this.
+	
+	Now I wanna point out something here. We're doing a lot of the same thing in our script, which is checking for an exit status of the previous executed command, if it's not zero, then we're gonna give an error message and exit. So, in the script, I'm doing each one explicitly and changing the echo statement for each one so that the user knows what exactly failed in the script. We could simplify this a bit by writing a function that will check the return status(exit code) of the previous command and then bail or exit your script if it doesn't succeed. Wherever requires, we can call that function by passing the error message as an argument.
+	
+	If ${DELETE_USER} is not set to true, then we're just going to disable the account or expire it. We can do that with 'chage' command.
+	
+	Now, we have our script created/ready, before we execute it, we need to give it executable permissions. Now let's execute this script without super user privileges and see what happens.
+		chmod 755 disable-local-user.sh
+		./disable-local-user.sh
+			Output:
+				Please run with sudo or as root.
+				
+	It says, "please run with sudo or as root". That's what we want. Let's make sure it exited with a non-zero exit status. And sure enough, we have an exit status of one.
+		echo $?  OR  echo ${?}
+			Output:
+				1
+	
+	So this time let's run it with the proper privileges, but don't supply any options and don't supply any usernames. Okay, we get a usage statement just like we wanted, and we also get a non-zero exit status, which is exactly what we expect.
+		sudo ./disable-local-user.sh
+			Output:
+				Usage: ./disable-local-user.sh [-dra] USER [USERN]...
+				Disable a local Linux account.
+				  -d  Deletes accounts instead of disabling them.
+				  -r  Removes the home directory associated with the account(s).
+				  -a  Creates an archive of the home directory associated with the account(s).
+		
+		echo $?  OR  echo ${?}
+			Output:
+				1
+				  
+	Now, let's supply an invalid option. Let's supply -z, which we don't handle.
+		sudo ./disable-local-user.sh -z
+			Output:
+				./disable-local-user.sh: illegal option -- z            ---> this is coming from the getopts shell built-in.  
+				Usage: ./disable-local-user.sh [-dra] USER [USERN]...
+				Disable a local Linux account.
+				  -d  Deletes accounts instead of disabling them.
+				  -r  Removes the home directory associated with the account(s).
+				  -a  Creates an archive of the home directory associated with the account(s).
+		
+		echo $?  OR  echo ${?}
+			Output:
+				1
+	
+	Now, let's try to disable a system account. So on this particular Linux systems, we're not really using 'mail' user. And I know 'mail' is a system account user with a low UID. So let's go ahead and disable that. Now, if we delete the 'mail' account also, then probably nothing bad is gonna happen. And again, these are test/QA systems, so we could throw them away and build a new one. So let's try to disable the 'mail' user.
+		sudo ./disable-local-user.sh mail
+			Output:
+				Processing user: mail
+				Refusing to remove the mail account with UID 8
+				
+		echo $?  OR  echo ${?}
+			Output:
+				1
+	
+	Okay, it says, I'm refusing to remove the mail account that has a UID of 8. So that is exactly what we want.
+	So now, what I'm gonna do is actually create some test accounts to verify our script(disable-local-user.sh) with and actually we wrote a script(i.e., add-test-accounts.sh, present under shellclass_scripts_by_udemy/exercises) to create some test accounts. It's a pretty simple script. It has mainly a for loop that sets everybody's password to 'pass123', creates the account and then sets the password. So I'll just go ahead and add those test accounts now.
+		sudo ./add-test-accounts.sh
+	
+	And now we have a few accounts to play with. Now let's run our script(disable-local-user.sh) against one of these test users that we created.
+		sudo ./disable-local-user.sh carrief
+			Output:
+				Processing user: carrief
+				The account carrief was disabled.
+				
+	Here it says 'the account was disabled', so let's make sure it's actually disabled by trying to log into it. We will use our handy password 'pass123'
+		su - carrief
+		Password:     --> give password as pass123
+			Output:
+				Your account has expired; Please contact your system administrator
+				su: User account has expired
+		
+	So that's the exact kind of behavior we want, just to be thorough, let's also make sure that the home directory for that user still exists.
+		ls -ld /home/carrief
+			Output:
+				drwxr-xr-x 2 carrief carrief 4096 Aug 19 13:34 /home/carrief
+				
+	Now let's delete the 'markh' account. We need the -d option for the delete.
+		sudo ./disable-local-user.sh -d markh
+			Output:
+				Processing user: markh
+				The account markh was deleted.
+		
+		id markh
+			Output:
+				id: markh: no such user
+				
+		ls -ld /home/markh
+			Output:
+				drwxr-xr-x 2 markh markh 4096 Aug 19 13:34 /home/markh   --> the home directory still exists, which is the behavior we wanted and expected
+	
+	Now let's delete a user and their associated home directory.
+		sudo ./disable-local-user.sh -dr harrisonf
+			Output:
+				Processing user: harrisonf
+				The account harrisonf was deleted.
+		
+		id harrisonf
+			Output:
+				id: harrisonf: no such user
+				
+		ls -ld /home/harrisonf
+			Output:
+				ls: cannot access '/home/harrisonf': No such file or directory
+	
+	Okay, now let's test the functionality that we have built into our script of operating on multiple users that are supplied as arguments to the script. And also, let's test the ability to create archives of these user accounts. So let's do this.
+		sudo ./disable-local-user.sh -dra alecg peterm
+			Output:
+				Processing user: alecg
+				Creating /archive directory.
+				Archiving /home/alecg to /archive/alecg.tgz
+				The account alecg was deleted.
+				Processing user: peterm
+				Archiving /home/peterm to /archive/peterm.tgz
+				The account peterm was deleted.
+		
+		id alecg
+			Output:
+				id: alecg: no such user
+		
+		id peterm
+			Output:
+				id: peterm: no such user
+				
+		ls -ld /home/alecg /home/peterm
+			Output:
+				ls: cannot access '/home/alecg': No such file or directory
+				ls: cannot access '/home/peterm': No such file or directory
+		
+		ls -l /archive
+			Output:
+				-rwxr-xr-x 1 root root 487 Aug 19 13:34 alecg.tgz
+				-rwxr-xr-x 1 root root 487 Aug 19 13:34 peterm.tgz
+	
+	Let's look at the contents of those archives. They're compressed, so we'll need -z for compress, -t for list, -v for verbose and -f for filename.
+		tar -ztvf /archive/alecg.tgz
+			Output:
+				drwx------ alecg/alecg	  0 2018-01-25 17:38 home/alecg/
+				-rw-r--r-- alecg/alecg	231 2016-12-06 18:19 home/alecg/.bashrc
+				-rw-r--r-- alecg/alecg	193 2016-12-06 18:19 home/alecg/.bash_profile
+				-rw-r--r-- alecg/alecg	18 2016-12-06 18:19 home/alecg/.bash_logout
+		
+		tar -ztvf /archive/peterm.tgz
+			Output:
+				drwx------ peterm/peterm	  0 2018-01-25 17:38 home/peterm/
+				-rw-r--r-- peterm/peterm	231 2016-12-06 18:19 home/peterm/.bashrc
+				-rw-r--r-- peterm/peterm	193 2016-12-06 18:19 home/peterm/.bash_profile
+				-rw-r--r-- peterm/peterm	18 2016-12-06 18:19 home/peterm/.bash_logout
+	
+6) Debugging Bash scripts:
+============================
+	a) Debugging on the entire script/Debugging Using xtrace Mode:
+		When things don't go according to plan, you need to determine what exactly causes the script to fail. Bash provides extensive debugging features. The most common is to start up the subshell with the -x option, which will run the entire script in debug mode. Traces of each command plus its arguments are printed to standard output after the commands have been expanded but before they are executed. Below is the content of script1.sh script:
+			#! /bin/bash
+			echo 'The script starts now.'
+			echo 'Hi, willy!'
+			ROOT_USER_HOME_DIR='/root'
+			echo $ROOT_USER_HOME_DIR
+			
+			bash -x ./script1.sh   --> run the script like this
+				Output:
+					+ echo 'The script starts now.'     -->  expanded command before executing
+					The script starts now.    -->  results of the execution of the above command
+					+ echo 'Hi, willy!'
+					Hi, willy!
+					+ ROOT_USER_HOME_DIR='/root'
+					+ echo '/root'               --> expanded command is printed
+					/root
+					
+		
+		For identifying logical errors, we may want to trace the state of variables and commands during the execution process. In such instances, we can execute the script in xtrace (execution trace) mode using the -x option. This mode prints the trace of commands for each line after they are expanded but before they are executed.
+		
+	b) Debugging on part(s) of the script:
+		Using the 'set' Bash built-in, those portions of the script of which you are sure that they are without fault, you can run in normal mode and display debugging information only for troublesome zones. Say we are not sure what the 'w' command will do in the example script1.sh, then we could enclose it in the script like below:
+			set -x			# activate debugging from here
+			w
+			set +x			# stop debugging from here
+			
+	c) Enabling verbose Mode:
+		We can enable the verbose mode using the -v switch, which allows us to view each command before it’s executed. To demonstrate this, let’s create a sample script, named positive_check.sh, with below code. This script checks whether or not the number entered as input is positive.
+			#! /bin/bash
+			read -p "Enter the input: " val
+			zero_val=0
+			if [ "$val" -gt "$zero_val" ]
+			then
+			   echo "Positive number entered."
+			else
+			   echo "The input value is not positive."
+			fi
+			
+		Next, let’s execute our script:
+			bash -v ./positive_check.sh
+				Output:
+					#! /bin/bash
+					read -p "Enter the input: " val
+					Enter the input: -10
+					zero_val=0
+					if [ "$val" -gt "$zero_val" ]
+					then
+					   echo "Positive number entered."
+					else
+					   echo "The input value is not positive."
+					fi
+					The input value is not positive.
+					
+		Let’s execute our positive_check.sh script in execution trace mode. You can see the expanded version of variables on stdout before execution.
+			bash -x ./positive_check.sh
+				Output:
+					+ read -p 'Enter the input: ' val
+					Enter the input: 17
+					+ zero_val=0
+					+ '[' 17 -gt 0 ']'     --> this is a 'test' in Linux
+					+ echo 'Positive number entered.'
+					Positive number entered.
+		
+		As we can notice, it prints every line of the script(without expanding) on the terminal before it’s processed. We can also add the -v option in the shebang line in the bash script. This has the same effect as explicitly calling a script using 'bash -v'.
+			#! /bin/bash -v
+			echo 'The script starts now.'
+			echo 'Hi, willy!'
+			ROOT_USER_HOME_DIR='/root'
+			echo $ROOT_USER_HOME_DIR
+			
+		Now, you can run the above script(i.e., script1.sh) without 'bash -v'.
+			./script1.sh
+		
+		Another equivalent is to enable the mode within a script using set command:
+			#! /bin/bash
+			echo 'The script starts now.'
+			echo 'Hi, willy!'
+			set -v
+			ROOT_USER_HOME_DIR='/root'
+			echo $ROOT_USER_HOME_DIR
+			set +v
+			
+		Now also, you can run the above script(i.e., script1.sh) without 'bash -v'.
+			./script1.sh
+			
+	d) Syntax Checking Using noexec Mode:
+		There can be situations where we may want to validate the script syntactically prior to its execution. If so, we can use the noexec mode using the -n option. As a result, Bash will read the commands but not execute them. Let’s execute our positive_check.sh script in noexec mode:
+			bash -n ./positive_check.sh   --->  This produces a blank output since there are no syntax errors
+		
+		Now, we’ll modify our script a bit and remove the 'then' statement:
+			#! /bin/bash
+			read -p "Enter the input: " val
+			zero_val=0
+			if [ "$val" -gt "$zero_val" ]
+			   echo "Positive number entered."
+			else
+			   echo "The input value is not positive."
+			fi
+			
+		Now, we’ll validate it syntactically with -n option:
+			bash -n ./positive_check_noexec.sh
+				Output:
+					./positive_check_noexec.sh: line 6: syntax error near unexpected token `else'
+					./positive_check_noexec.sh: line 6: `  else'
+					
+		As expected, it threw an error since we missed the then statement in the if condition.
+		
+	e) Combining Debugging Options:
+		To get better insights, we can further combine the various options of the set command. we can combine the verbose and xtrace mode to get more precise debug information. As discussed previously, the -v option shows each line before it is evaluated, and the -x option shows each line after they are expanded/evaluated. Hence, we can combine both -x and -v options to see how statements look like before and after variable substitutions. Now, let’s execute our positive_check.sh script with -x and -v mode enabled:
+			bash -xv ./positive_check.sh
+				Output:
+					#! /bin/bash
+					read -p "Enter the input: " val
+					+ read -p 'Enter the input: ' val
+					Enter the input: 5
+					zero_val=0
+					+ zero_val=0
+					if [ "$val" -gt "$zero_val" ]
+					then
+					   echo "Positive number entered."
+					else
+					   echo "The input value is not positive."
+					fi
+					+ '[' 5 -gt 0 ']'
+					+ echo 'Positive number entered.'
+					Positive number entered.
+					
+		Alternatively, these modes can be specified in the script itself, by adding the desired options to the first line shell declaration. Options can be combined, as is usually the case with UNIX commands:
+			#!/bin/bash -xv
+		
+			

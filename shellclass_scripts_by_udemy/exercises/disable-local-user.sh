@@ -22,7 +22,7 @@ then
    exit 1
 fi
 
-# Parse the options.
+# Parse the command line options.
 while getopts dra OPTION
 do
   case ${OPTION} in
