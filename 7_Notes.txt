@@ -1,0 +1,635 @@
+1) sort, uniq, du, netstat and wc commands in Linux:
+=======================================================
+	In this lesson, you'll learn how to sort data using the sort and uniq commands. Let's start out with some data we already have on this system which is in the /etc/password file. If you wanna sort the contents of a file alphabetically, you can use the 'sort' command.
+		cat /etc/password
+			Output:
+				systemd-network:x:480:480:systemd Network Management:/:/sbin/nologin
+				mail:x:498:498:Mailer daemon:/var/spool/clientmqueue:/sbin/nologin
+				root:x:0:0:root:/root:/bin/bash
+				admin:x:1000:100:admin:/home/admin:/bin/bash
+				svn:x:470:473:user for Apache Subversion svnserve:/srv/svn:/sbin/nologin
+
+		sort /etc/password
+			Output:
+				admin:x:1000:100:admin:/home/admin:/bin/bash
+				mail:x:498:498:Mailer daemon:/var/spool/clientmqueue:/sbin/nologin
+				root:x:0:0:root:/root:/bin/bash
+				svn:x:470:473:user for Apache Subversion svnserve:/srv/svn:/sbin/nologin
+				systemd-network:x:480:480:systemd Network Management:/:/sbin/nologin
+
+	If you want to reverse the order of the sort, use the -r option.
+		sort -r /etc/password
+			Output:
+				systemd-network:x:480:480:systemd Network Management:/:/sbin/nologin
+				svn:x:470:473:user for Apache Subversion svnserve:/srv/svn:/sbin/nologin
+				root:x:0:0:root:/root:/bin/bash
+				mail:x:498:498:Mailer daemon:/var/spool/clientmqueue:/sbin/nologin
+				admin:x:1000:100:admin:/home/admin:/bin/bash
+
+	Let's see what happens when we use sort with numbers. I'm going to pull out the uid from the etc/password file with the cut command.
+		cut -d ':' -f 3 passwd
+			Output:
+				480
+				498
+				0
+				1000
+				470
+
+	Now let's use the output of the cut command as standard input to the sort command. So here this is demonstrating that you don't have to run sort directly against files. It can accept standard input as well, so we'll do this through a pipe. This(output) might not be what you expected. The list is sorted but not numerically.
+		cut -d ':' -f 3 passwd | sort
+			Output:
+				0
+				1000
+				470
+				480
+				498
+
+	However when working with numbers, you probably want a numeric sort. To do that, we can use the -n option.
+		cut -d ':' -f 3 passwd | sort -n
+			Output:
+				0
+				470
+				480
+				498
+				1000
+		
+	Now we have the smallest numbers first and the largest numbers last. Of course, you can reverse this order with the -r option. 
+		cut -d ':' -f 3 passwd | sort -nr
+			Output:
+				1000
+				498
+				480
+				470
+				0
+
+	Let's talk about the 'du' command quickly. It displays the disk usage. So let's see how much space is being used in /var directory. By the way, there are gonna be some files in there that are not readable by our normal users, so I'm going to use sudo to give us root privileges to look in there.
+		sudo du /var
+
+		mkdir linux-learn
+		cd linux-learn
+
+		mkdir folder1
+		mkdir folder2
+		mkdir folder3
+
+		cd /home/admin/linux-learn/folder2
+		curl -O https://www.sefram.com/images/products/photos/hi_res/5472DC.jpg		--> download any file from the internet whose size in KB
+
+		cd folder3
+		mkdir folder31
+		mkdir folder32
+		echo 'Ambuj Shukla' > file33
+		ls
+			Output:
+				file33  folder31  folder32
+
+		cd /home/admin/linux-learn/folder3/folder32
+		curl -O https://www.sefram.com/images/products/photos/hi_res/7202.jpg   --> download any file from the internet whose size in MB
+
+		cd ../folder1
+		echo 'Ram Sita Ram, Sita Ram, Jai Jai Ram' > file11
+		echo 'Hare krishna, Krishna Krishna, Hare Rama, Rama Rama' > file12
+		ll
+		  Output:
+			-rw-rw-r--. 1 admin admin 36 Aug 23 15:27 file11
+			-rw-rw-r--. 1 admin admin 52 Aug 23 15:28 file12
+
+		du /home/admin/linux-learn
+			Output:
+				8       /home/admin/linux-learn/folder1
+				552     /home/admin/linux-learn/folder2
+				0       /home/admin/linux-learn/folder3/folder31
+				2284    /home/admin/linux-learn/folder3/folder32
+				2288    /home/admin/linux-learn/folder3
+				2852    /home/admin/linux-learn
+		
+	You will notice two columns. The first column is a number that represents disk usage and by default this number is in kilobytes. The second column is the related directory that is using that particular amount of storage. Now let's perform a numeric sort to find out which directory in '/home/admin/linux-learn' is using the most space.
+		du ~/linux-learn/ | sort -n
+			Output:
+				0       /home/admin/linux-learn/folder3/folder31
+				8       /home/admin/linux-learn/folder1
+				552     /home/admin/linux-learn/folder2
+				2284    /home/admin/linux-learn/folder3/folder32
+				2288    /home/admin/linux-learn/folder3
+				2852    /home/admin/linux-learn/
+
+	Of course, '/home/admin/linux-learn' itself is at the very bottom since '/home/admin/linux-learn' contains all the sub directories within it, so it uses the most space. But the one before that, '/home/admin/linux-learn/folder1', is the subdirectory in '/home/admin/linux-learn' that is using the most space, and then above that, '/home/admin/linux-learn/folder3' and so on. If we look at the '/home/admin/linux-learn/folder1' directory, it says it's using 8 kilobytes. If you don't want to see the size in kilobytes, you can use the -h option with du command which makes it print the sizes in a human readable format.
+		du -h ~/linux-learn/
+			Output:
+				8.0K    /home/admin/linux-learn/folder1
+				552K    /home/admin/linux-learn/folder2
+				0       /home/admin/linux-learn/folder3/folder31
+				2.3M    /home/admin/linux-learn/folder3/folder32
+				2.3M    /home/admin/linux-learn/folder3
+				2.8M    /home/admin/linux-learn/
+
+	If we try to sort this human readable data, it's not really going to work how we would like it to work and let's just demonstrate that now.
+		du -h ~/linux-learn/ | sort
+			Output:
+				0       /home/admin/linux-learn/folder3/folder31
+				2.3M    /home/admin/linux-learn/folder3
+				2.3M    /home/admin/linux-learn/folder3/folder32
+				2.8M    /home/admin/linux-learn/
+				552K    /home/admin/linux-learn/folder2
+				8.0K    /home/admin/linux-learn/folder1
+
+	so it's not in the proper human readable order because, by default, 'sort' command sorts in ascending order. Above output says MB is smaller than KB, which is not correct. And we could even try this with a -n option.
+		du -h ~/linux-learn/ | sort -n
+			Output:
+				0       /home/admin/linux-learn/folder3/folder31
+				2.3M    /home/admin/linux-learn/folder3
+				2.3M    /home/admin/linux-learn/folder3/folder32
+				2.8M    /home/admin/linux-learn/
+				8.0K    /home/admin/linux-learn/folder1
+				552K    /home/admin/linux-learn/folder2
+			
+	Now the good news is that sort has a -h option that performs a human numeric sort. It understands that a number that ends in a G is a gigabyte, a number that ends in a capital M is a megabyte and so on.
+		du -h ~/linux-learn/ | sort -h
+			Output:
+				0       /home/admin/linux-learn/folder3/folder31
+				8.0K    /home/admin/linux-learn/folder1
+				552K    /home/admin/linux-learn/folder2
+				2.3M    /home/admin/linux-learn/folder3
+				2.3M    /home/admin/linux-learn/folder3/folder32
+				2.8M    /home/admin/linux-learn/
+
+	The smaller sizes are up at the top of this sorted list. So sort's -h option works with human readable numbers. In a previous lesson, we used the netstat command to display open ports and let's just walk through that again.
+		netstat -nutl
+			Output:
+				Active Internet connections (only servers)
+				Proto Recv-Q Send-Q Local Address           Foreign Address         State
+				tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN
+				tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN
+				tcp6       0      0 :::22                   :::*                    LISTEN
+				tcp6       0      0 ::1:25                  :::*                    LISTEN
+				udp        0      0 0.0.0.0:68              0.0.0.0:*
+
+		netstat -nutl | grep ':' | awk '{print $4}' | awk -F ':' '{print $NF}'
+			Output:
+			22
+			25
+			22
+			25
+			68
+	
+		netstat -nutl | grep ':' | awk '{print $4}' | awk -F ':' '{print $NF}' | sort -n
+			Output:
+				22
+				22
+				25
+				25
+				68
+
+	Now we have a sorted list, but there are duplicate ports. 'sort' command can handle this situation too with its -u option and -u stands for unique, and it only displays a line if it has not been previously displayed before. 
+		netstat -nutl | grep ':' | awk '{print $4}' | awk -F ':' '{print $NF}' | sort -nu
+			Output:
+				22
+				25
+				68
+
+	By the way, we don't have to combine the -u option with the -n option. We can use -u alone. So below we have a unique list of ports but they are just not numerically sorted.
+		netstat -nutl | grep ':' | awk '{print $4}' | awk -F ':' '{print $NF}' | sort -u
+			Output:
+				22
+				68
+				25
+
+	In addition to sort's -u option, there's a command called 'uniq' which does something very similar to the -u option. With 'uniq', however, the lines coming to it have to be sorted in order for it to work because it only compares the current line to the previous line. So let me show you.
+		netstat -nutl | grep ':' | awk '{print $4}' | awk -F ':' '{print $NF}' | sort -n | uniq
+			Output:
+				22
+				25
+				68
+
+	So now we have a unique list of ports with no duplicates and just to show you that uniq doesn't work with an unsorted set of lines, let's do this.
+		netstat -nutl | grep ':' | awk '{print $4}' | awk -F ':' '{print $NF}' | uniq
+			Output:
+				22
+				25
+				22
+				25
+				68
+
+	So at first glance, this might seem like an extra step. Why would you ever want to use the uniq command?  If you have to give it sorted data anyway and sort already has a -u option, Well, when you want to know how many occurrences of each line there are, use 'uniq -c'.
+		netstat -nutl | grep ':' | awk '{print $4}' | awk -F ':' '{print $NF}' | sort -n | uniq -c
+			Output:
+				2 22
+				2 25
+				1 68
+
+	The first column is the number of times the line appeared in the output followed by the line. So here we can see there were two instances of 22, two instances of 25 and one instance of 68. Let's say you wanna find out how many syslog messages a program is generating and you can do that by doing something like below. So let's look at the data we're working with.
+		sudo cat /var/log/messages
+			Output:
+				Aug 18 03:43:01 localhost systemd: Removed slice User Slice of root.
+				Aug 18 04:01:01 localhost systemd: Created slice User Slice of root.
+				Aug 18 04:01:01 localhost systemd: Started Session 6284 of user root.
+				Aug 18 04:01:01 localhost systemd: Removed slice User Slice of root.
+				.......
+				.......
+				Aug 18 07:26:14 localhost dhclient[1040]: DHCPREQUEST on ens192 to 172.17.1.15 port 67 (xid=0x56e274c1)
+				Aug 18 07:26:14 localhost dhclient[1040]: DHCPACK from 172.17.1.15 (xid=0x56e274c1)
+				Aug 18 07:26:14 localhost NetworkManager[914]: <info>  [1723946174.8438] dhcp4 (ens192):   address 172.16.77.190
+				Aug 18 07:26:14 localhost NetworkManager[914]: <info>  [1723946174.8441] dhcp4 (ens192):   plen 16 (255.255.0.0)
+				Aug 18 07:26:14 localhost NetworkManager[914]: <info>  [1723946174.8441] dhcp4 (ens192):   gateway 172.16.0.254
+				.......
+				.......
+				Aug 18 07:26:14 localhost dbus[851]: [system] Activating via systemd: service name='org.freedesktop.nm_dispatcher' unit='dbus-org.freedesktop.nm-dispatcher.service'
+				Aug 18 07:26:14 localhost dhclient[1040]: bound to 172.16.77.190 -- renewal in 139057 seconds.
+				Aug 18 07:26:14 localhost systemd: Starting Network Manager Script Dispatcher Service...
+				Aug 18 07:26:14 localhost dbus[851]: [system] Successfully activated service 'org.freedesktop.nm_dispatcher'
+				.......
+				.......
+	
+	The fifth field in the above output contains the application name or the program name that is writing to syslog. So let's pull that out.
+		sudo cat /var/log/messages | awk '{print $5}'
+			Output:
+				systemd:
+				systemd:
+				....
+				....
+				dhclient[1040]:
+				dhclient[1040]:
+				NetworkManager[914]:
+				NetworkManager[914]:
+				NetworkManager[914]:
+				....
+				....
+				dbus[851]:
+				dhclient[1040]:
+				systemd:
+				dbus[851]:
+				....
+				....
+
+	So let's sort this(above output) list, and now let's feed that sorted list to 'uniq' and get a count.
+		sudo cat /var/log/messages | awk '{print $5}' | sort
+			Output:
+				dbus[851]:
+				dbus[851]:
+				...
+				...
+				dhclient[1040]:
+				...
+				...
+				NetworkManager[914]:
+				nm-dispatcher:
+				rsyslogd:
+				systemd:
+				systemd-logind:
+				...
+				...
+	
+		sudo cat /var/log/messages | awk '{print $5}' | sort | uniq -c
+			Output:
+			    8 dbus[851]:
+			   12 dhclient[1040]:
+			   32 NetworkManager[914]:
+			    8 nm-dispatcher:
+			    1 rsyslogd:
+			  477 systemd:
+			   34 systemd-logind:
+			    1 yum[28799]:
+	
+	Let's say we wanna sort this output. So let's take the output from uniq and run it back through sort command again.
+		sudo cat /var/log/messages | awk '{print $5}' | sort | uniq -c | sort -n
+			Output:
+				  1 rsyslogd:
+				  1 yum[28799]:
+				  8 dbus[851]:
+				  8 nm-dispatcher:
+				 12 dhclient[1040]:
+				 32 NetworkManager[914]:
+				 35 systemd-logind:
+				477 systemd:
+
+	So now we know there are 477 messages generated from the 'systemd', 35 from 'systemd-logind' and so on. You can apply this to all sorts of situations where you want to know how many occurrences of something there are. For example, if you want to know which IPs are hitting your web server the most, you can strip out the IP addresses, sort them, feed them to 'uniq -c', and then you'll end up with a count of hits by unique IP address. While we're on the subject of counting, I wanna spend just a quick minute here on the 'wc' command. You can think of it as standing for word count, but it not only counts words. It can count bytes, characters and lines. Personally I end up using the line count option most often. So let's provide the /etc/passwd file as an argument to the 'wc' command.
+		wc /etc/passwd
+			Output:
+				19  27 844 /etc/passwd
+	
+	If you look at the output above, the first column is the number of lines in the file. The second column is the number of words and the third column is the number of characters. Just to be clear, 'wc' really doesn't understand language. It considers a word to be any sequence of characters delimited by a white space. We can make 'wc' to display a word count with '-w' option, just a byte count with '-c' option and finally, just a line count with '-l' option.
+		wc -w /etc/passwd
+			Output:		27 /etc/passwd
+
+		wc -c /etc/passwd
+			Output:		844 /etc/passwd
+
+		wc -l /etc/passwd
+			Output:		19 /etc/passwd
+			
+	This tells us that there are 19 accounts on the system because there's one account on each line in the /etc/passwd file. Let's say you wanted to know how many accounts are using the Bash shell. First, you could display the lines that match the pattern bash with the grep command.
+		grep bash /etc/passwd
+			Output:
+				root:x:0:0:root:/root:/bin/bash
+				admin:x:1000:1000:admin:/home/admin:/bin/bash
+	
+	All right, maybe this isn't the greatest example because we can quickly count that there are two lines, but let's say you have hundreds/thousands of accounts on a system and there's a lot more output than you can just visually see and recognize at that moment. Then what you would want to do is let wc count the number of lines in the output, so you feed the output of the grep command into wc with a -l option.
+		grep bash /etc/passwd | wc -l
+			Output:		2
+	
+	In this particular situation, you can also use the '-c' option with grep to perform count of the accounts which are using bash shell. However, if you're not using a command that performs count, then you will end up having to pipe that output to wc to perform the count for you.
+		grep -c bash /etc/passwd
+			Output: 	2
+	
+	Okay, let's get back to sorting. There's one last option to sort that I want to cover before we wrap things up and that option is -k which allows you to specify a sort key/field. So far we've been sorting on the very first bit of data in a line. If you have data separated into multiple fields, perhaps you wanna sort on a particular field other than the first one. so let's just cat the /etc/passwd file.
+		cat /etc/passwd
+			Output:
+			systemd-network:x:480:480:systemd Network Management:/:/sbin/nologin
+			mail:x:498:498:Mailer daemon:/var/spool/clientmqueue:/sbin/nologin
+			root:x:0:0:root:/root:/bin/bash
+			admin:x:1000:100:admin:/home/admin:/bin/bash
+			svn:x:470:473:user for Apache Subversion svnserve:/srv/svn:/sbin/nologin
+			
+	Now let's say we want to sort the /etc/passwd file based on uid and uid is in the third column with each column being separated with a colon. By default, sort uses white space as a field separator. So to tell sort to use a colon, we need to use the -t option. Then we can use the -k option to provide a sort key. The simplest sort key is a number which represents the field to sort by. This third field happens to be comprised of numbers, so we're going to use a numeric sort with -n. Of course, we can combine this(i.e., the below command) with other options like -r for a reverse sort as well. So as we all know, the root account has a uid of zero.
+		cat passwd | sort -t ':' -k 3 -n
+			Output:
+				root:x:0:0:root:/root:/bin/bash
+				svn:x:470:473:user for Apache Subversion svnserve:/srv/svn:/sbin/nologin
+				systemd-network:x:480:480:systemd Network Management:/:/sbin/nologin
+				mail:x:498:498:Mailer daemon:/var/spool/clientmqueue:/sbin/nologin
+				admin:x:1000:100:admin:/home/admin:/bin/bash
+		
+		cat passwd | sort -t ':' -k 3 -n -r
+			Output:
+				admin:x:1000:100:admin:/home/admin:/bin/bash
+				mail:x:498:498:Mailer daemon:/var/spool/clientmqueue:/sbin/nologin
+				systemd-network:x:480:480:systemd Network Management:/:/sbin/nologin
+				svn:x:470:473:user for Apache Subversion svnserve:/srv/svn:/sbin/nologin
+				root:x:0:0:root:/root:/bin/bash
+
+	Let's do a little demonstration on how to analyze a web server log file using sort and uniq. Let's say you wanna know how many times a particular URL was visited. First, let's look at what we have to work with(i.e., data). So we have a 'access_log' file under shellclass_scripts_by_udemy/demos. Copy it to your Linux system.
+		cat access_log | more   --> press 'q' to exit/quit from more
+			Output:
+				29.48.17.65 - - [21/Dec/2017:10:19:53 -0800] "GET /apps/cart.jsp?appID=8345 HTTP/1.0" 200 5040 "http://www.mcdermott.com/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/5360 (KHTML, like Gecko) Chrome/13.0.853.0 Safari/5360"
+				140.181.105.145 - - [21/Dec/2017:10:21:55 -0800] "GET /posts/posts/explore HTTP/1.0" 200 5017 "http://rempel.com/author/" "Mozilla/5.0 (compatible; MSIE 5.0; Windows NT 5.2; Trident/4.1)"
+				252.94.76.104 - - [21/Dec/2017:10:24:24 -0800] "GET /explore HTTP/1.0" 200 4917 "http://www.mante.biz/search/" "Mozilla/5.0 (Windows 98; Win 9x 4.90) AppleWebKit/5330 (KHTML, like Gecko) Chrome/15.0.821.0 Safari/5330"
+				79.199.156.133 - - [21/Dec/2017:10:26:54 -0800] "DELETE /posts/posts/explore HTTP/1.0" 200 4988 "http://howelabadie.com/app/main/blog/main.jsp" "Mozilla/5.0 (iPod; U; CPU iPhone OS 4_0 like Mac OS X; sl-SI) AppleWebKit/533.4.2 (KHTML, like Gecko) Version/3.0.5 Mobile/8B116 Safari/6533.4.2"
+				192.141.118.125 - - [21/Dec/2017:10:31:10 -0800] "GET /wp-admin HTTP/1.0" 200 4946 "http://www.morar.com/search/" "Opera/8.57.(Windows NT 4.0; sl-SI) Presto/2.9.171 Version/12.00"
+	
+	My first goal is to extract the URL portion from the file. Now there are multiple ways to do this. However what I notice is that the URL is contained within a set of quotation marks. So let me split on that and see where that takes us.
+		cat access_log | cut -d '"' -f 2   OR   cut -d '"' -f 2 access_log
+			Output:
+				GET /apps/cart.jsp?appID=8345 HTTP/1.0
+				GET /posts/posts/explore HTTP/1.0
+				GET /explore HTTP/1.0
+				DELETE /posts/posts/explore HTTP/1.0
+				GET /wp-admin HTTP/1.0
+				.......
+				.......
+	
+	Now it looks like we're left with three columns of data separated by a single space. The second column has the URL in it and let's pull that out. So we can do this with a cut command as well.
+		cut -d '"' -f 2 access_log | cut -d ' ' -f 2     OR     awk '{print $7}' access_log
+			Output:
+				/apps/cart.jsp?appID=8345
+				/posts/posts/explore
+				/explore
+				/posts/posts/explore
+				/wp-admin
+				.......
+				.......
+				
+	Now I want to count the number of times each one of those URLs was visited. So I know I can do that with a uniq command and I also know that I need to provide uniq with sorted data first.
+		cut -d '"' -f 2 access_log | cut -d ' ' -f 2 | sort
+			Output:
+				/app/main/posts
+				/app/main/posts
+				...
+				...
+				/wp-admin
+				/wp-admin
+				/wp-adminclear
+				...
+	
+		cut -d '"' -f 2 access_log | cut -d ' ' -f 2 | sort | uniq -c
+			Output:
+				1229 /app/main/posts
+				.....
+				.....
+				1271 /wp-admin
+				1232 /wp-content
+	
+	So now we have a count in column one and the URL in column two. So now what we can do is actually sort this uniquely counted output with the sort command.
+		cut -d '"' -f 2 access_log | cut -d ' ' -f 2 | sort | uniq -c | sort -n
+			Output:
+				   1 /apps/cart.jsp?appID=10000
+				   1 /apps/cart.jsp?appID=1003
+				....
+				....
+				   3 /apps/cart.jsp?appID=8345
+			    1229 /app/main/posts
+			    1232 /wp-content
+			    1238 /list
+			    1240 /search/tag/list
+			    1259 /posts/posts/explore
+			    1265 /explore
+			    1271 /wp-admin
+	
+	So it looks like we had 1,271 visits to /wp-admin, 1,265 to /explore and so on. Now let's say we only want to display the top three most visited URLs and we can do this simply by displaying the last three lines of output with a tail command.
+		cut -d '"' -f 2 access_log | cut -d ' ' -f 2 | sort | uniq -c | sort -n | tail -3
+			Output:
+			   1259 /posts/posts/explore
+			   1265 /explore
+			   1271 /wp-admin
+			  
+	So here you see the three most visited URLs according to that access_log file. Now I'm gonna go ahead and put that command into a script so I don't have to solve this same problem again. Refer to luser-demo14.sh under shellclass_scripts_by_udemy/demos. In the luser-demo14.sh script, we are checking whether the passed, as an argument, log file exists or not through 'if [[ ! -e "${LOG_FILE}" ]]'. So this says if not exists LOG_FILE, then we'll give them an error message. In other words, If the file doesn't exist or we can't open it or read it then we're going to tell them that we can't open the file they provided. Make the script executable.
+		chmod 755 luser-demo14.sh
+		./luser-demo14.sh    -->  passing no argument
+			Output:
+				Cannot open
+		
+		./luser-demo14.sh asdf
+			Output:
+				Cannot open asdf
+		
+		echo $?
+			Output:		1
+		
+		./luser-demo14.sh access_log
+			Output:
+			   1259 /posts/posts/explore
+			   1265 /explore
+			   1271 /wp-admin
+
+2)	Bash script for parsing log file:
+=========================================
+	The sample data that we're going to use for this exercise is syslog-sample under shellclass_scripts_by_udemy/demos. The first thing I do when working on these types of problems is to look at the data that I'm dealing with. I wanna know how the input looks like first. Then I can start to look at ways to transform that data so that it's easy to work with or so that it meets my requirements. So let me just look at the contents of syslog-sample file. It has a lot of data.
+		cat syslog-sample | more
+			Output:
+				Apr 15 00:00:01 spark CROND[7802]: (root) CMD (/usr/lib64/sa/sa1 1 1)
+				Apr 15 00:00:01 spark CROND[7803]: (root) CMD (/bin/systemctl try-restart atop.service > /dev/null 2>&1 || :)
+				Apr 15 00:00:01 spark sshd[7798]: Failed password for root from 218.25.208.92 port 20924 ssh2
+				Apr 15 00:00:01 spark systemd: Created slice user-0.slice.
+				Apr 15 00:00:02 spark sshd[7798]: pam_succeed_if(sshd:auth): requirement "uid >= 1000" not met by user "root"
+				Apr 15 00:00:04 spark sshd[7798]: Failed password for root from 218.25.208.92 port 20924 ssh2
+				Apr 15 00:00:05 spark sshd[7798]: pam_succeed_if(sshd:auth): requirement "uid >= 1000" not met by user "root"
+				Apr 15 00:00:07 spark sshd[7798]: Disconnecting: Too many authentication failures for root [preauth]
+				Apr 15 00:00:07 spark sshd[7798]: Failed password for root from 218.25.208.92 port 20924 ssh2
+				Apr 15 00:00:07 spark sshd[7798]: PAM 5 more authentication failures; logname= uid=0 euid=0 tty=ssh ruser= rhost=218.25.208.92 user=root
+				Apr 15 00:00:07 spark sshd[7798]: PAM service(sshd) ignoring max retries; 6 > 3
+				Apr 15 00:00:11 spark sshd[7812]: pam_succeed_if(sshd:auth): requirement "uid >= 1000" not met by user "root"
+				Apr 15 00:00:11 spark sshd[7812]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=218.25.208.92 user=root
+				Apr 15 00:00:13 spark sshd[7812]: Failed password for root from 218.25.208.92 port 37885 ssh2
+				Apr 15 00:00:14 spark sshd[7812]: pam_succeed_if(sshd:auth): requirement "uid >= 1000" not met by user "root"
+				Apr 15 00:00:16 spark sshd[7812]: Failed password for root from 218.25.208.92 port 37885 ssh2
+				
+	One thing I noticed a lot is that there are many lines that say, 'Failed Password for root'. I'm going to bet that people are not only trying to log in as the root user but probably some other common users as well. So a common thing here on these lines, which contains Failed Password for root' is the word 'Failed'. So let me just grep out that pattern.
+		grep Failed syslog-sample
+			Output:
+				Apr 15 00:00:01 spark sshd[7798]: Failed password for root from 218.25.208.92 port 20924 ssh2
+				Apr 15 00:00:04 spark sshd[7798]: Failed password for root from 218.25.208.92 port 20924 ssh2
+				Apr 15 00:00:07 spark sshd[7798]: Failed password for root from 218.25.208.92 port 20924 ssh2
+				.....
+				.....
+	
+	So let's exclude root's failed attempts to see who else  has made failed login attempts we get.
+		grep Failed syslog-sample | grep -v root
+			Output:
+				Apr 15 01:41:10 spark sshd[8526]: Failed password for invalid user admin from 185.110.132.54 port 34348 ssh2
+				Apr 15 04:48:29 spark sshd[10857]: Failed password for invalid user ubnt from 195.154.49.74 port 50127 ssh2
+				Apr 15 04:48:36 spark sshd[10861]: Failed password for invalid user admin from 195.154.49.74 port 57574 ssh2
+				Apr 15 14:09:35 spark sshd[15578]: Failed password for lp from 208.109.54.40 port 43274 ssh2
+				.....
+				.....
+	
+	What I noticed is that the lines aren't exactly in the same format. What sticks out to me here is that the words 'invalid user' exist on most of those lines here but they don't exist on all of the other/remaining lines. For example, the 'lp' line, it says 'ailed password for lp from'. The important piece of information that we want to isolate on each of these lines is the IP address. One way we could do that is to split the line on the word 'from'. Rather we can use 'from '(i.e., from space) as a delimiter so that we don't end up with that extra space in the beginning of the second field.
+		grep Failed syslog-sample | awk -F 'from ' '{print $2}'
+			Output:
+				218.25.208.92 port 20924 ssh2
+				218.25.208.92 port 20924 ssh2
+				218.25.208.92 port 20924 ssh2
+				.....
+				.....
+	
+	So we ended up with the IP address and the rest of the information on the line. Now we're left with four columns all separated by a single space. The first column is the IP address. The second column is the word 'port' followed by the actual port number itself. And then finally the protocol, which here is ssh2. Now from here, we can print the first column either with cut or awk.
+		grep Failed syslog-sample | awk -F 'from ' '{print $2}' | awk '{print $1}'
+			Output:
+				218.25.208.92
+				218.25.208.92
+				218.25.208.92
+				.....
+				.....
+				
+		grep Failed syslog-sample | awk -F 'from ' '{print $2}' | cut -d ' ' -f 1
+			Output:
+				218.25.208.92
+				218.25.208.92
+				218.25.208.92
+				.....
+				.....
+	
+	So let's go back and talk about another way to solve this problem. If we count the number of fields from the left to right, we end up with the IP address being in different fields depending on whether or not the user is valid or invalid. But if we count the number of fields from the right to left, or from the end of the line towards the beginning of the line, you'll see that the IP address is always the fourth column from the end. That means we can use awk's special variable $NF, which represents the total number of fields on a line and then do a little subtraction to get to the IP address column.
+		grep Failed syslog-sample | grep -v root
+			Output:
+				Apr 15 01:41:10 spark sshd[8526]: Failed password for invalid user admin from 185.110.132.54 port 34348 ssh2
+				Apr 15 14:09:35 spark sshd[15578]: Failed password for lp from 208.109.54.40 port 43274 ssh2
+				.....
+				.....
+		
+		grep Failed syslog-sample | awk '{print $(NF - 3)}'
+			Output;
+				Output:
+				218.25.208.92
+				218.25.208.92
+				218.25.208.92
+				.....
+				.....
+	
+	So I've demonstrated two ways to extract the IP address. There are other ways as well, and if you can come up with another way, that's totally fine as long as you have extracted the IP address from all those lines in that file. So this second approach that I used here makes the most sense to me and it seems a little bit simpler, so that's what I'm going to use going forward. We know we can use the 'uniq' command to count the number of occurrences of a line. We also know that uniq requires sorted input. So let's first sort our list of IP addresses and then send it to uniq.
+		grep Failed syslog-sample | awk '{print $(NF - 3)}' | sort   --> It doesn't need to be a numeric sort. better to perform string sort
+			Output:
+				119.15.137.149
+				159.122.220.20
+				159.122.220.20
+				.....
+				.....
+				
+		grep Failed syslog-sample | awk '{print $(NF - 3)}' | sort | uniq -c
+			Output:
+				   1 119.15.137.149
+				  20 159.122.220.20
+				  57 180.128.252.1
+			    6749 182.100.67.59
+			    3379 183.3.202.111
+				   1 185.110.132.54
+				  87 195.154.49.74
+				  27 208.109.54.40
+			    3085 218.25.208.92
+				 142 41.223.57.47
+				   4 8.19.245.2
+		
+	Now, let's sort this data numerically.
+		grep Failed syslog-sample | awk '{print $(NF - 3)}' | sort | uniq -c | sort -n
+			Output:
+				   1 185.110.132.54
+				   4 8.19.245.2
+				  20 159.122.220.20
+				  27 208.109.54.40
+				  57 180.128.252.1
+				  87 195.154.49.74
+				 142 41.223.57.47
+			    3085 218.25.208.92
+			    3379 183.3.202.111
+			    6749 182.100.67.59
+
+	Actually, let's reverse this order and put the most failed attempts at the top of the list. So we can just add a -r option to our sort command to reverse it and we end up with the most failed login attempts first and the least failed login attempts last.
+		grep Failed syslog-sample | awk '{print $(NF - 3)}' | sort | uniq -c | sort -nr	
+			Output:
+			    6749 182.100.67.59
+			    3379 183.3.202.111
+			    3085 218.25.208.92
+				 142 41.223.57.47
+				  87 195.154.49.74
+				  57 180.128.252.1
+				  27 208.109.54.40
+				  20 159.122.220.20
+				   4 8.19.245.2
+				   1 185.110.132.54
+				   1 119.15.137.149
+	
+	By the way this syslog-sample log file contains entries from just one day. That means there were 6,749 failed login attempts from the IP address of 182.100.67.59. Now, this could mean a couple of different things. The first thing that comes to my mind is someone was performing a brute force attack. However, another possibility is that something is wrong with an account that we're using for some sort of automated process. Perhaps one of our servers in another data center is connecting to the system over ssh to do some work, but maybe the ssh key was accidentally changed or deleted, or the password for the account was changed, or some other configuration issue has cropped up here. So what I'm going to do is find the location of this IP address. Now, there's a command called 'geoiplookup' that returns the location of an IP address and so let's run that now.
+		geoiplookup 182.100.67.59
+			Output:
+				GeoIP Country Edition: CN, China
+	
+	That IP address is associated with China. If you happen to have servers in China or people who work from China, this still might not be an attack but just a misconfiguration of some sort. However, let's assume our people only work in the United States, Canada, and Europe. Also, let's assume our data centers are located in New York, London, and Amsterdam. In this particular case, I would interpret this activity as a brute force attack. It would be nice to have this location information for any IP addresses who failed to login into our servers for more than let's say 10 times.
+	
+	If we look at the output data of 'grep Failed syslog-sample | awk '{print $(NF - 3)}' | sort | uniq -c | sort -nr' command above, we have two columns, count in column one and an IP address in column two. We could loop through this output and test to see if the count is greater than 10, and then, if it is, perform the 'geoiplookup' on that associated IP address. Refer show-attackers.sh bash script under shellclass_scripts_by_udemy/exercises.
+	
+	Let me explain the below code which we have in the show-attackers.sh script.
+		grep Failed ${LOG_FILE} | awk '{print $(NF - 3)}' | sort | uniq -c | sort -nr |  while read COUNT IP
+		do
+		  # If the number of failed attempts is greater than the limit, display count, IP, and location.
+		  if [[ "${COUNT}" -gt "${LIMIT}" ]]
+		  then
+			LOCATION=$(geoiplookup ${IP} | awk -F ', ' '{print $2}')
+			echo "${COUNT},${IP},${LOCATION}"
+		  fi
+		done
+	
+	'grep Failed ${LOG_FILE} | awk '{print $(NF - 3)}' | sort | uniq -c | sort -nr' command will generate the output containing the count of failed login attempts and the corresponding IP address from where the attempts have been made. Then we are passing the output of this command as the input to the 'read' command. 'read' command will read each line, one by one, and put the 1st column data in COUNT variable and 2nd column data in IP variable. 'while' loop will make sure that all the lines are read by the 'read' command. 
+		chmod 755 show-attackers.sh
+		./show-attackers.sh syslog-sample
+			Output:
+				Count, IP, Location
+				6749,182.100.67.59,China
+				3379,183.3.202.111,China
+				3085,218.25.208.92,China
+				142,41.223.57.47,Kenya
+				87,195.154.49.74,France
+				57,180.128.252.1,Thailand
+				27,208.109.54.40,United States
+				20,159.122.220.20,United States
+
+3) How to Read a File Line by Line in Bash script uisng While loop?
+======================================================================
+		cat /etc/passwd | while read LREAD
+		do
+			echo ${LREAD}
+		done
+		
+			Output:
+					systemd-network:x:480:480:systemd Network Management:/:/sbin/nologin
+					mail:x:498:498:Mailer daemon:/var/spool/clientmqueue:/sbin/nologin
+					root:x:0:0:root:/root:/bin/bash
+					admin:x:1000:100:admin:/home/admin:/bin/bash
+					svn:x:470:473:user for Apache Subversion svnserve:/srv/svn:/sbin/nologin

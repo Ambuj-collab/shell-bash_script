@@ -1,0 +1,545 @@
+1) 'cut' command in Linux:
+=============================
+	The cut command is used for cutting out sections from each line of input it receives and displaying those sections to standard output. You can use cut to extract pieces of a line by byte position, character position or by a delimiter. This makes cut ideal for extracting columns from a CSV file, for example. Cut is not a shell built-in, it's a standalone utility. So, we can use the 'man' command to get some information on this command line utility.
+		man cut
+		
+	You can perform cuts by bytes by using the -b option, by characters with -c option and by fields by using the -f option. Also, you'll probably use the -d option to specify a delimiter when using the -f option for extracting the fields, unless you are working with tab delimited data. For each one of these options, you'll need to supply a range. Ranges are pretty simple and I'll demonstrate them with a couple of examples.
+	
+	Okay, I'm just gonna use the text that already exists in the /etc/passwd file and then use the cut utility to cut it up or slice it up in different ways. So, let's just look at the contents of that /etc/passwd file now. 
+		cat /etc/passwd
+			Output:
+				admin:x:1000:100:admin:/home/admin:/bin/bash
+				mail:x:498:498:Mailer daemon:/var/spool/clientmqueue:/sbin/nologin
+				root:x:0:0:root:/root:/bin/bash
+				svn:x:470:473:user for Apache Subversion svnserve:/srv/svn:/sbin/nologin
+				systemd-network:x:480:480:systemd Network Management:/:/sbin/nologin
+				
+	Let's start out by cutting the /etc/passwd file by character. To print the first character of each line, we'll use '-c 1' and 1 here is the range that we're specifying.
+		cut -c 1 /etc/passwd
+			Output:
+				a
+				m
+				r
+				s
+				s
+	
+	If you supply a single number, then only character at that number is displayed. So, to display the seventh character of each line, use -c 7. Okay, that's not too useful. The next one isn't too useful either, but hang in there with me. We'll do some actual work in just a minute. You can specify a starting position and an ending position by connecting them with a hyphen. So, to cut out characters four through seven from each line, we could use '-c 4-7'. It's important when you're specifying a range that you do not use spaces. There is no space between four, the dash and the seven in our command, so just keep that in mind.
+		cut -c 4-7 /etc/passwd
+			Output:
+				in:x
+				l:x:
+				t:x:
+				:x:4
+				temd
+		
+	Okay, let's say you want to display every character on a line, starting with fourth character. To do that, use a range of '4-'. This is useful if you don't know how long each line is.
+		cut -c 4- /etc/passwd
+			Output:
+				in:x:1000:100:admin:/home/admin:/bin/bash
+				l:x:498:498:Mailer daemon:/var/spool/clientmqueue:/sbin/nologin
+				t:x:0:0:root:/root:/bin/bash
+				:x:470:473:user for Apache Subversion svnserve:/srv/svn:/sbin/nologin
+				temd-network:x:480:480:systemd Network Management:/:/sbin/nologin
+				
+	You can do the opposite, which is to display every character up to and including a position. So, to display the first four characters, you can use '-c -4'. By the way, that range(i.e., -4) is exactly the same as 1-4. And we get the same output.
+		cut -c -4 /etc/passwd
+			Output:
+				admi
+				mail
+				root
+				svn:
+				syst
+				
+	You can pick out multiple individual characters by separating them with a comma. For example, to print the first, third and fifth characters use '-c 1,2,3'.
+		cut -c 1,3,5 /etc/passwd
+			Output:
+				amn
+				mi:
+				ro:
+				snx
+				sse
+				
+	It is important to point out here that 'cut' won't rearrange the order, even if you specify a different order in the range. For example, the below command that I'm about to type generates the exact same output as above.
+		cut -c 5,3,1 /etc/passwd
+	
+	There are a couple of different methods to rearranging the output data, but we'll get to that later. And one more thing, if you supply a range that doesn't match anything, then you'll get a blank line. So, let's try to print the 999th character in the /etc/passwd file. There isn't a 999th character in any of the lines, so there is nothing to display for the line and you end up with a blank line being displayed instead. Okay, so that really covers how to use ranges. You'll notice that I've been using the -c option to cut on characters, but you can use the -b option to cut by byte. To display the first byte of every line in the /etc/passwd file, well, we would use '-b 1'. Output is the same, in this particular case, as '-c 1'. However, a byte is not always the same as a character because there are some characters that are made up of multiple bytes and are basically called, multi byte characters. For example, UTF-8 characters are multi byte characters.
+	
+	Let me display a multi byte character to the screen with echo. 
+		echo "ñu"  -->  ñ is a Spanish alphabet(multi bytes character)
+			Output:
+				ñu
+	
+	To display the first character in that string, use '-c 1'. So, we'll just pipe the output of echo as the standard input to the cut command. 
+
+	I just wanted to be explicit and say that you don't have to supply a file for cut to operate on some data, you can also use standard input as well. Okay, so back to the difference between a bite and a character. 
+		echo "ñu" | cut -c 1
+		Output:
+			ñ
+
+	But look what happens when we only print the first byte with '-b 1'. The first byte is displayed of the multi-byte ñ character. In most cases, this(using -b option) is not what you want. Just something to keep in mind.
+		echo "ñu" | cut -b 1  --> to see the output of this, look at the images_screenshots/multi-byte_character.png image
+	
+		echo ñu | cut -b 1-2
+			Output:
+				ñ
+		
+		echo ñu | cut -b 1-3
+			Output:
+				ñu
+		
+	Let's move on to the -f option. It allows you to cut lines by field. By default, -f splits on a tab. Anything before a tab is considered to be the first field. Anything after the first tab and before the second tab is considered to be the second field and so on. cut uses the term field, but you can think of these as columns if you wish.
+	
+	Let me generate some tab delimited data with the echo command. The -e option, to echo command, allows you to use some back slash escapes('\') that allow you to do some things like, generate a tab character('\t'), a new line('\n') and so on. '\t' represents a tab, so we can do this.
+		echo -e 'one\ttwo\tthree'
+			Output:
+				one		two		three
+
+	So, if we want to display just the first field, we can do this, 'cut -f 1'. And to display the second field, 'cut -f 2'. Third field is of course 'cut -f 3'.
+		echo -e 'one\ttwo\tthree' | cut -f 1
+			Output:
+				one
+				
+		echo -e 'one\ttwo\tthree' | cut -f 3
+			Output:
+				three
+				
+	So, what happens if you have data that is not tab separated? Let's say we're dealing with a CSV or a comma separated value file. In this case, you need to tell the cut command what to use as the delimiter.
+		echo -e 'one,two,three'
+			Output:
+				one,two,three
+		
+		echo -e 'one,two,three' | cut -d ',' -f 2
+			Output:
+				two
+				
+	Sometimes, you'll see people do what I'm about to do here, which is to not use quotes around the delimiter when specifying that delimiter. So, you might see something like below.
+		echo -e 'one,two,three' | cut -d , -f 3
+			Output:
+				three
+
+	You may also see people not put a space after the -d and before the delimiter.
+		echo -e 'one,two,three' | cut -d, -f 1
+			Output:
+				one
+
+	Either one of those methods work, as long as it's a character that's not used or interpreted by the shell. If you're trying to do below, it won't work. If you want it to work then you have to quote the forward slash, otherwise the shell interprets it as a line continuation character.
+		echo 'one\two\three'
+			Output:
+				one\two\three
+		
+		echo 'one\two\three' | cut -d \ -f -3
+			Output:
+				cut: the delimiter must be a single character
+				Try 'cut --help' for more information.
+		
+		echo 'one\two\three' | cut -d '\' -f -3
+			Output:
+				three
+	
+	The /etc/passwd file is actually made up of a series of columns or fields all separated by a colon. So, let's print the username and UID of every user in the /etc/passwd file.
+		cut -d ':' -f 1,3 /etc/passwd
+			Output:
+				admin:1000
+				mail:498
+				root:0
+				svn:470
+				systemd-network:480
+				
+	Notice that the output is delimited by the original delimiter, to change it use the --output-delimiter option. So, let's change it to something else here.
+		cut -d ':' -f 1,3 --output-delimiter=',' /etc/passwd
+			Output:
+				admin,1000
+				mail,498
+				root,0
+				svn,470
+				systemd-network,480
+	
+	Here's a common situation that you'll face. You'll have a CSV file with a header or some other type of data that contains a header. Let me create a CSV file on the fly here. When you do this, you get the header and the data.
+		echo 'first,last' > people.csv
+		echo 'John,Smitt' >> people.csv
+		echo 'firstly, mclasty' >> people.csv
+		echo 'Mr. firstly, mclasty' >> people.csv
+		cat people.csv
+			Output:
+				first,last			--> header row
+				John,Smitt
+				firstly, mclasty
+				Mr. firstly, mclasty
+				
+		cut -d ',' -f 1 people.csv   --> when you do this, you will get the header as well in the output as shown below
+			Output:
+				first
+				John
+				firstly
+				Mr. firstly
+				
+	So, you have two choices. The first one is to remove the header before you send the data to cut or remove it after cut has done its work. Before we do that, let's review the 'grep' command quickly. By default, grep displays matches to a pattern that you supply. So if we look for the pattern of 'first', it will display the line or lines that match that pattern.
+		grep first people.csv
+			Output:
+				first,last
+				firstly, mclasty
+				Mr. firstly, mclasty
+	
+	Here we have three matches. And notice that it doesn't display any of the lines that do not match. Let's narrow down our search, such that it only matches the header. You can do that by supplying more information or a more exact pattern.
+		grep 'first,last' people.csv
+			Output:
+				first,last
+	
+	Speaking of regular expressions, what I'm about to show you are my two most commonly used regular expressions ever. The first regular expression is a caret(^) symbol. It matches the beginning of a line. It matches a position and not a character. So, if we wanna match all the lines that start with 'first', use caret first, like so.
+		grep '^first' people.csv
+			Output:
+				first,last
+				firstly, mclasty
+				
+	The second regular expression is the dollar sign($). It matches the end of a line. It too matches a position and not a character. So, if you wanna find all the lines that end in 't'.
+		grep 't$' people.csv
+			Output:
+				first,last
+				John,Smitt
+	
+	So, to force an exact match, you can start your pattern with a caret(^) and end it with a dollar sign($). 
+		grep '^first,last$' people.csv
+			Output:
+				first,last
+	
+	Now, we have isolated the header of the file, but we want everything except that. Luckily, grep has a handy option that inverts matching. That option is -v. The -v option makes grep display any lines that do not match the pattern supplied.
+		grep -v '^first,last$' people.csv
+			Output:
+				John,Smitt
+				firstly, mclasty
+				Mr. firstly, mclasty
+				
+	Now that we've removed the header, we can send it to cut.
+		grep -v '^first,last$' people.csv | cut -d ',' -f 1
+			Output:
+				John
+				firstly
+				Mr. firstly
+				
+	Another option is to perform the 'cut' first, then remove the header. I don't like this as much because 'cut' alters the output first, making the header change too, but it does work.
+		cut -d ',' -f 1 people.csv	  -->  That contains the header
+			Output:
+				first
+				John
+				firstly
+				Mr. firstly
+				
+		cut -d ',' -f 1 people.csv | grep -v '^first$'	 -->  And that removes the header
+			Output:
+				John
+				firstly
+				Mr. firstly
+	
+	By the way, cut only handles single character delimiters. This is fine in most cases, but there might be occasions where you would want or need to split on multiple characters. Take this example.
+		cp people.csv people.dat
+		vi !$   -->  !$ would be replaced by the last argument of the last command. So, vi 'people.dat' would be executed
+			Edit:
+				DATA:firstDATA:last			--> header row
+				DATA:JohnDATA:Smitt
+				DATA:firstlyDATA:mclasty
+				DATA:Mr. firstlyDATA:mclasty
+		
+		cat people.dat
+		
+	At first glance, you might think, oh, I can just split this on the colon(:). Let's try that and see what happens. 
+		cut -d ':' -f 2 people.dat
+			Output:
+				firstDATA
+				JohnDATA
+				firstlyDATA
+				Mr. firstlyDATA
+				
+	That leaves the string DATA, which really should be considered part of the delimiter. It's not part of the actual data itself. What you would really like to do is this. But as you can see below, that doesn't work.
+		cut -d 'DATA:' -f 2 people.dat
+			Output:
+				cut: the delimiter must be a single character
+				Try 'cut --help' for more information.
+	
+	We can do that with 'awk' however. Now I'm not saying that this is the only way to handle this situation, but it is one way, plus it gives me a chance to briefly cover awk. Every good shell scripter should atleast be aware of awk. Let me just give you the answer first and then I'll explain it to you in just a second.
+		awk -F 'DATA:' '{print $2}' people.dat
+			Output:
+				first
+				John
+				firstly
+				Mr. firstly
+	
+	This is an entire awk program on a single line. The -F option allows you to specify a field separator. We're telling it to use DATA: as the field separator. The entire program is contained in the next set of single quotes. The braces in awk mean an action. This makes awk do things or take actions. The action we want awk to take is to print. As you probably have figured out by now, $2 represents the contents/data of the second field. So, $1 is the data in the first field. Let's display the first and third fields from the /etc/passwd file using awk.
+		awk -F ':' '{print $1 $3}' /etc/passwd
+			Output:
+				admin1000
+				mail498
+				root0
+				svn470
+				systemd-network480
+	
+		awk -F ':' '{print $1, $3}' /etc/passwd
+			Output:
+				admin 1000
+				mail 498
+				root 0
+				svn 470
+				systemd-network 480
+			
+	Here, you can see that awk separates $1 and $3 with a space. That's because the ',' in the print statement of awk represents the output field separator. By default, the output field separator is the space. In awk, if you leave out that comma, then the fields will be printed without space. Awk has a special built-in variable named OFS and that stands for Output Field Separator. You can change the default from a space to anything you would like by changing the value of that variable(i.e., OFS). To change a variable in awk command, use the -v option and then perform the variable assignment. So, to change OFS from space to comma, we can do this.
+		awk -F ':' -v OFS=',' '{print $1, $3}' /etc/passwd
+			Output:
+				admin,1000
+				mail,498
+				root,0
+				svn,470
+				systemd-network,480
+	
+	Instead of setting the OFS variable, you can just give the delimiter as a string to print like so. The string/delimiter we're going to print is a comma.
+		awk -F ':' '{print $1 "," $3}' /etc/passwd
+			Output:
+				admin,1000
+				mail,498
+				root,0
+				svn,470
+				systemd-network,480
+	
+	If you want a space after the comma, for example, just add that space in your string.
+		awk -F ':' '{print $1 ", " $3}' /etc/passwd
+			Output:
+				admin, 1000
+				mail, 498
+				root, 0
+				svn, 470
+				systemd-network, 480
+	
+	Now, let's add some more text to our print statement here.			
+		awk -F ':' '{print "COL1: " $1 " COL3: " $3}' /etc/passwd
+			Output:
+				COL1: admin COL3: 1000
+				COL1: mail COL3: 498
+				COL1: root COL3: 0
+				COL1: svn COL3: 470
+				COL1: systemd-network COL3: 480
+	
+	So, if you remember earlier, I said you can't control the order of the data being displayed with 'cut' command, so let's take the below example. It displays the fields in the order that they appear from the input. With awk, you can change it like so.
+		cut -d ':' -f 3,1 /etc/passwd
+			Output:
+				admin:1000
+				mail:498
+				root:0
+				svn:470
+				systemd-network:480
+		
+		awk -F ':' '{print $3, $1}' /etc/passwd
+			Output:
+				1000 admin
+				498 mail
+				0 root
+				470 svn
+				480 systemd-network
+	
+	Then you can combine it with any other additional strings like below.
+		awk -F ':' '{print "UID: " $3 ";LOGIN: " $1}' /etc/passwd
+			Output:
+				UID: 1000;LOGIN: admin
+				UID: 498;LOGIN: mail
+				UID: 0;LOGIN: root
+				UID: 470;LOGIN: svn
+				UID: 480;LOGIN: systemd-network
+	
+	In addition to $1, $2, $3 and so on, awk gives us $NF, which represents the number of fields found. So, to print the last field for every line in a file, use $NF.
+		awk -F ':' '{print $NF}' /etc/passwd
+			Output:	
+				/bin/bash
+				/sbin/nologin
+				/bin/bash
+				/sbin/nologin
+				/sbin/nologin
+	
+	The password file is very uniform, so using $NF isn't exactly groundbreaking here. But if you're dealing with irregular data, where every line is having different number of fields then $NF is very useful to get/print the last field. Even if the number of fields is consistent in the data, it might be easier to say, print the last field or print $NF, so you don't have to count the number of fields first. If you have a CSV file with 47 different fields or columns and need the last one, it's a lot quicker to use $NF, instead of counting all those columns. You can do some math with awk too, just surround it in parentheses, so check this out.
+		awk -F ':' '{print $(NF - 1)}' /etc/passwd   --> it prints second from the last field
+			Output:
+				/home/admin
+				/var/spool/clientmqueue
+				/root
+				/srv/svn
+				/
+	
+	Let's generate some irregular data. You can see that what we really have here is a file with four lines in it and each line is made up of two columns, separated by varying number of white space, white space being spaces and or tabs. It would be really hard to make sense of this data with 'cut' because it only allows us to split on a single character. Even if we split on a space, we wouldn't end up with what we wanted because different lines have different number of spaces separating the columns. Also, it wouldn't handle lines with tabs. However, awk performs really well in this situation.
+		echo 'L1C1        L1C2' > lines
+		echo '      L2C1 L2C2    ' >> lines
+		echo ' L3C1       L3C2' >> lines
+		echo -e 'L4C1\tL4C2' >> lines
+		cat lines
+			Output:
+				L1C1        L1C2
+					  L2C1 L2C2
+				 L3C1       L3C2
+				L4C1    L4C2
+		
+		awk '{print $1, $2}' lines
+			Output:
+				L1C1 L1C2
+				L2C1 L2C2
+				L3C1 L3C2
+				L4C1 L4C2
+		
+	awk considers non white space characters to be a field by default. awk easily handles extraneous spaces in each line.
+
+2)	netstat Command in Linux:
+===============================
+	Let's say we want a list of port numbers that are open on our local system without any extra data around it. We just want, you know, number 22 to be displayed. If we have SSH listening on port 22, for example. The netstat command can display open ports and instead of me showing you the man page for it, I'm just gonna walk you through the options that we're gonna use today. So we'll use the netstat command, we'll use the -n option to display numbers instead of names. So instead of displaying SSH or SSHD, it will display 22 for port 22. We can use -u to get information on UDP and use -t to get information on TCP and -l for listening ports. Differences between TCP and UDP protocols. The main difference between TCP (transmission control protocol) and UDP (user datagram protocol) is that TCP is a connection-based protocol and UDP is connectionless. While TCP is more reliable, it transfers data more slowly. UDP is less reliable but works more quickly.
+		netstat -nutl
+			Output:
+				Active Internet connections (only servers)
+				Proto Recv-Q Send-Q Local Address           Foreign Address         State
+				tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN
+				tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN
+				tcp6       0      0 :::22                   :::*                    LISTEN
+				tcp6       0      0 ::1:25                  :::*                    LISTEN
+				udp        0      0 0.0.0.0:68              0.0.0.0:*
+
+	So in this particular case we have two lines that comprise the header. So, there are a couple of different ways to manage this. One way would be to pipe it to grep and do grep -v which we know how to do, and then use a pattern that matches the 1st header. So that we will get rid of the first line. And then we could continue this by using grep again and we could get rid of the second line like below.
+		netstat -nutl | grep -v '^Active'
+			Output:
+				Proto Recv-Q Send-Q Local Address           Foreign Address         State
+				tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN
+				tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN
+				tcp6       0      0 :::22                   :::*                    LISTEN
+				tcp6       0      0 ::1:25                  :::*                    LISTEN
+				udp        0      0 0.0.0.0:68              0.0.0.0:*
+		
+		netstat -nutl | grep -v '^Active' | grep -v '^Proto'
+			Output:
+				tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN
+				tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN
+				tcp6       0      0 :::22                   :::*                    LISTEN
+				tcp6       0      0 ::1:25                  :::*                    LISTEN
+				udp        0      0 0.0.0.0:68              0.0.0.0:*
+	
+	Now, I didn't really talk about this in grep class/video but what you can also do is use extended regular expressions with a -E option. And that allows you to do something like below. The pipe symbol in regular expressions is an 'or'. So if we match 'active' or 'proto', then we will have made a match.
+		netstat -nutl | grep -Ev '^Active|^Proto'
+			Output:
+				tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN
+				tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN
+				tcp6       0      0 :::22                   :::*                    LISTEN
+				tcp6       0      0 ::1:25                  :::*                    LISTEN
+				udp        0      0 0.0.0.0:68              0.0.0.0:*
+	
+	Again, that's just one way to solve this problem. Now if we're looking at the data that we have left with above, there are some things in common with some line. Some things that are not in common. Some lines have 'tcp', some have 'tcp6' some have 'udp', some have 'LISTEN' and so on. But one thing that is constant throughout the lines here are colons. So we know that the first two lines(header lines) do not have any colons.
+		netstat -nutl | grep ':'	--> this would just display all the lines that has a colon in it
+			Output:
+				tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN
+				tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN
+				tcp6       0      0 :::22                   :::*                    LISTEN
+				tcp6       0      0 ::1:25                  :::*                    LISTEN
+				udp        0      0 0.0.0.0:68              0.0.0.0:*
+	
+	So in either way the goal here is to get the data without the header. So, let me tell you the data we're looking to extract. So from line one we wanna pull out 22 because that's the port. From second line, we wanna pull out 25 which is the port for that and so on. At first thought, you may be thinking we can just split this on a colon and print the second field. Well, let's just try that and see what happens.
+		netstat -nutl | grep ':'  | cut -d ':' -f 2
+			Output:
+				22              0.0.0.0
+				25            0.0.0.0
+
+
+				68              0.0.0.0
+
+	So that doesn't give us exactly what we want because we have some extra data on some lines and then on other lines we have blank lines in the output. So using the cut command in that way is not going to work. Now if we see our original data here, we see that all the ports that we're interested in are actually in the fourth column, and that column being Local Address. You can also see that these columns aren't separated by a consistent number of spaces. So that rolls out cut, but we know that awk handles these kind of white space situations well. So we're gonna use that to pull out the fourth column. So we'll narrow it down to the field that have the data that we're looking for and then we'll print the fourth column.
+		netstat -nutl | grep ':'  | awk '{print $4}'
+			Output:
+				0.0.0.0:22
+				127.0.0.1:25
+				:::22
+				::1:25
+				0.0.0.0:68
+		
+	Even further narrowing down the data is required. Again, we're left with a similar situation where cut wouldn't work because on every line the port number that we're looking for is at the end of the line and we have to split the lines based on colon delimiter. this makes different number of fields on every line. Some lines are having 2 fields, some are having more than 2 fields. 
+		netstat -nutl | grep ':'  | awk '{print $4}' | awk -F ':' '{print $NF}'
+			Output:
+				22
+				25
+				22
+				25
+				68
+	
+	If we run our regular netstat command(i.e., netstat -nutl) then you will see that we have tcp(i.e., tcp4), tcp6, udp(i.e., udp4) and udp6 related data/information. So one way we can just get tcp(i.e., TCPv4) and udp(i.e., UDPv4) is to use the -4 option with netstat. You will get TCPv4 and UDPv4. I'm not really using TCPv6 and UDPv6, so I'm not really worried about that.
+		netstat -4nutl
+			Output:
+				Active Internet connections (only servers)
+				Proto Recv-Q Send-Q Local Address           Foreign Address         State
+				tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN
+				tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN
+				udp        0      0 0.0.0.0:68              0.0.0.0:*
+				
+		netstat -4nutl | grep ':'  | awk '{print $4}'
+			Output:
+				0.0.0.0:22
+				127.0.0.1:25
+				0.0.0.0:68
+	
+	We are left with two columns of data. The first column being an IP address and the second column being a port. And those are separated by a colon. So this would be an ideal situation where we could use cut.
+		netstat -4nutl | grep ':'  | awk '{print $4}' | cut -d ':' -f 2
+			Output:
+				22
+				25
+				68
+	
+	We could also use the awk command in this situation as well. It doesn't have to be cut. 
+		netstat -4nutl | grep ':'  | awk '{print $4}' | awk -F ':' '{print $2}'
+			Output:
+				22
+				25
+				68
+	
+	-p option to netstat, it displays the pid(process id) and the name of the program that has the port open. But to get that information, you need to run netstat with super user privileges.
+		sudo netstat -nutlp
+			Output:
+				Active Internet connections (only servers)
+				Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+				tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1230/sshd
+				tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      1576/master
+				tcp6       0      0 :::22                   :::*                    LISTEN      1230/sshd
+				tcp6       0      0 ::1:25                  :::*                    LISTEN      1576/master
+				udp        0      0 0.0.0.0:68              0.0.0.0:*                           1040/dhclient
+	
+	Actually, let's limit this data down a little bit.
+		sudo netstat -nutlp | grep 22
+			Output:
+				tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1230/sshd
+				tcp6       0      0 :::22                   :::*                    LISTEN      1230/sshd
+	
+	What this shows is that we have SSHD program/application with a pid of 909(i.e., running on the pid of 909) listening on port 22 on our system.
+				
+3)	Bash script to find the open network ports on Linux system:
+================================================================
+	Refer to luser-demo13.sh script under shellclass_scripts_by_udemy/demos. Let's try it out, before that we need to make sure it's executable. If you don't pass any argument to the script then it will print all the open network ports. And if we pass '-4' argument to the script, then it limits those ports to the v4(i.e., TCPv4 and UDPv4) protocols.
+		chmod 755 luser-demo13.sh
+		./luser-demo13.sh
+			Output:
+				22
+				25
+				22
+				25
+				68
+		
+		./luser-demo13.sh -v
+			Output:
+				22
+				25
+				68
+	
+	But if we do something like below, then we get an error from netstat because '-blah' is not a valid option to netstat.
+		./luser-demo13.sh -blah
+			Output:
+				netstat: invalid option -- 'b'
+				usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
+					   netstat [-vWnNcaeol] [<Socket> ...]
+					   netstat { [-vWeenNac] -I[<Iface>] | [-veenNac] -i | [-cnNe] -M | -s [-6tuw] } [delay]
+				......
+				......
+				......
+	
+	We could also send all kinds of different things to netstat that we may or may not want to do. So if you wanna be more exact, you could do something like below.
+		if [[ "${1}" = '-4' ]]
+		then
+			netstat -nutl ${1} | grep : | awk '{print $4}' | awk -F':' '{print $NF}'
+		else
+			echo 'Invalid argument. Pass -4 as the argument.'
+		fi
+	
+	

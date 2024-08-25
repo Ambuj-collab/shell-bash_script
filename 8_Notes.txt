@@ -1,0 +1,408 @@
+1) sed command in Linux:
+==========================
+	In this lesson, you'll learn how to use the most important features of the sed command. sed stands for Stream Editor and it's used for, editing streams. You might not be familiar with the term stream, but if you performed any I/O redirection or piping, you've been using streams. You can think of a stream as the data that travels from one process to another through a pipe or from one file to another as a redirect or from one device to another. So you can think of standard input as the standard input stream, standard output as the standard output stream and standard error as the standard error stream. By the way, these data streams are typically textual data.
+
+	The sed command is used to perform basic text transformations on an input stream. For example, you can use sed to substitute some text in place of other text, remove lines, append text after given lines, and insert text before certain lines. 'sed' differs from other editors such as Vim, Emacs and nano and that it's used programmatically. Of course you can substitute some text in place of other texts, remove lines, append text after given lines and insert text before certain lines using Vim but that requires interaction from a human. With 'sed', you can programmatically perform these edits without the need of interaction, and this makes sed ideal to be used in shell scripts. The most common use of sed is to act as a command line version of find and replace. Sed is a standalone utility and not a shell built-in. We can prove this by using the 'type' shell built-in.
+		type -a sed
+			Output:
+				sed is /usr/bin/sed  --> when you will execute sed command, /usr/bin/sed program will be executed
+
+	Of course, for standalone commands/utilities, you can use 'man' to get help and documentation on how to use that command. So let's quickly look at sed's man page.
+		man sed
+
+	Let's create a file to work with.
+		echo 'Dwight is the assistant regional manager.' > manager.txt
+		cat manager.txt
+			Output:
+				Dwight is the assistant regional manager.
+
+	Let's say you want to replace the text 'assistant' with a text 'assistant to the'. To do that, you would use the substitute command in sed. The substitute command is represented by the character 's'. We'll tell 'sed' to perform a substitution by specifying the letter 's'. After the s, we use a forward slash followed by the text we want to substitute and then another forward slash. In this case, that text is 'assistant'. By the way, the forward slash is acting as a delimiter and the text between the 1st set of forward slashes is called the search pattern. This search pattern is actually a regular expression. So you can make very advanced searches if you want to. In this case, we're keeping things simple to demonstrate the concept of finding and replacing some text using 'sed'. The text between the 2nd set of forward slashes is called the replacement string.
+		sed 's/assistant/assistant to the/' manager.txt
+			Output:
+				Dwight is the assistant to the regional manager.
+
+	When we execute the command, you can see that the text 'assistant' has been replaced with 'assistant to the'. The original text is 'Dwight is the assistant regional manager'. The text displayed after being transformed by our sed command is 'Dwight is the assistant to the regional manager'. Notice that I used the word displayed. I used it very intentionally here. In this example, sed is not altering the contents of the file, it's just sending its output via standard out(i.e., stdout) which is our terminal. We can prove that the original file is unaltered by looking at its contents.
+		cat manager.txt
+			Output:
+				Dwight is the assistant regional manager.
+
+	Let's look at another example of using sed to find and replace text. Let's change the text 'my wife' to 'sed'. In this example, we didn't reuse any of the texts that we searched for. Instead, we completely replaced it with brand new text.
+		echo 'I love my wife.' > love.txt
+		cat love.txt
+			Output:
+				I love my wife.
+
+		sed 's/my wife/sed/' love.txt
+			Output:
+				I love sed.
+
+	It should probably go without saying. That sed is case sensitive by default. So here's an example of that.
+		sed 's/MY WIFE/sed/' love.txt
+			Output:
+				I love my wife.
+
+	Notice that the lowercase text 'my wife' was not substituted. That's because it wasn't an exact match. If nothing matches, 'sed' doesn't perform any alterations and therefore the text is returned without alteration. If you want to perform a case insensitive search, you'll need to supply a flag. So let's see the format/syntax of the 'sed'.
+		Syntax: sed 's/search-pattern/replacement-string/flags' <source_data>
+	
+		sed 's/MY WIFE/sed/i' love.txt
+			Output:
+				I love sed.
+
+	So we have supplied the 'i' flag to the above command which you can think of as standing for case insensitive. Now the text gets replaced because you told sed to ignore the case. By the way and it strikes me as a little funny, you can also use capital 'I' as the flag to do this insensitive case matching. So the below command works as well.
+		sed 's/MY WIFE/sed/I' love.txt
+			Output:
+				I love sed.
+
+	Let's add some more lines to our love.txt file and see how sed handles that. Notice that I've used two greater than signs in the below command and that causes the text to be appended to the end of the file. If I would just used one, it would've truncated the file.
+		echo 'This is line 2.' >> love.txt
+		echo 'I love my wife with all of my heart.' >> love.txt
+		cat love.txt
+			Output:
+				I love my wife.
+				This is line 2.
+				I love my wife with all of my heart.
+
+	Now let's try the replacement command again.
+		sed 's/my wife/sed/' love.txt
+			Output:
+				I love sed.
+				This is line 2.
+				I love sed with all of my heart.
+	
+	What happens is that 'sed' reads one line from the file and executes the sed script(i.e., s/my wife/sed/) in single quotes against that line. Then, it moves on to the next line and does the same thing until it reaches the end of the file. You'll see that 'my wife' was replaced by the word 'sed' on lines 1 and 3. Line 2 was unchanged because our search pattern 'my wife' was not found on that line. Let's add yet another line to this file(i.e., love.txt) to demonstrate another important concept and then run the replacement command again.
+		echo 'I love my wife and my wife loves me. Also, my wife loves the cat.' >> love.txt
+		cat love.txt
+			Output:
+				I love my wife.
+				This is line 2.
+				I love my wife with all of my heart.
+				I love my wife and my wife loves me. Also, my wife loves the cat.
+
+		sed 's/my wife/sed/' love.txt
+			Output:
+				I love sed.
+				This is line 2.
+				I love sed with all of my heart.
+				I love sed and my wife loves me. Also, my wife loves the cat.
+
+	Notice that on the last line of the above output, only the first occurrence of 'my wife' was replaced. By default, 'sed' just replaces the first occurrence of the search pattern on a line. To override this behavior, we'll need to use the 'g' flag. You can think of 'g' as standing for global, as in a global replace.
+		sed 's/my wife/sed/g' love.txt
+			Output:
+				I love sed.
+				This is line 2.
+				I love sed with all of my heart.
+				I love sed and sed loves me. Also, sed loves the cat.
+
+	If you only want to replace the second occurrence of the search pattern, use the number '2' as a flag. If you only want to replace the third occurrence, use '3'; the fourth, use '4', etc. So let's do this.
+		sed 's/my wife/sed/2' love.txt
+			Output:
+				I love my wife.
+				This is line 2.
+				I love my wife with all of my heart.
+				I love my wife and sed loves me. Also, my wife loves the cat.
+
+	This time, none of the first occurrences of the text 'my wife' were replaced but only the second occurrences were. On the line where only one occurrence of 'my wife' existed, that line was unaltered because there was no second occurrence. On the last line where 'my wife' appears three times, only the second one was changed. By the way, when I'm saying things like changed, I don't mean that the original file has changed. The contents of the file(i.e., love.txt) remain the same. Sometimes you don't want to just see the output displayed to your terminal, but instead you want to save that output. One way to do that is to redirect the output of the 'sed' command to a file. Of course this isn't anything unique with 'sed' command, it's just how Linux works with any command. So let's create a new file called 'my-new-love.txt'. Again, the original file(i.e., love.txt) will remain unaltered.
+		sed 's/my wife/sed/g' love.txt > my-new-love.txt
+		cat my-new-love.txt
+			Output:
+				I love sed.
+				This is line 2.
+				I love sed with all of my heart.
+				I love sed and sed loves me. Also, sed loves the cat.
+
+		cat love.txt
+			Output:
+				I love my wife.
+				This is line 2.
+				I love my wife with all of my heart.
+				I love my wife and my wife loves me. Also, my wife loves the cat.
+	
+	The original file with the original text and the new file with a redirected and altered text. If you want 'sed' to alter the original file, use the '-i' option to 'sed' which you can think of as in place editing. If you want 'sed' to make/take a backup copy of the original file before it alters it, supply some text right after the '-i' and sed will append that text to the filename of the backup file.
+		sed -i.bak 's/my wife/sed/' love.txt
+		ls
+		 Output:
+			love.txt	love.txt.bak	manager.txt		my-new-love.txt
+
+	So now we have our original file named love.txt and another one(i.e., backup) named love.txt.bak. 'sed' has performed an in-place edit to the original file. So let's look at that now.
+		cat love.txt
+			Output:
+				I love sed.
+				This is line 2.
+				I love sed with all of my heart.
+				I love sed and my wife loves me. Also, my wife loves the cat.
+		
+		cat love.txt.bak
+			Output:
+				I love my wife.
+				This is line 2.
+				I love my wife with all of my heart.
+				I love my wife and my wife loves me. Also, my wife loves the cat.
+	
+	So there you can see where 'sed' has replaced the text 'my wife' wherever appropriate, according to the command we ran. If we look at the backup file(i.e., love.txt.bak), we'll see that it has the original/previous text in it. It's important that you don't use a space after the '-i' option. If you do, you'll get an error. So let me demonstrate that here.
+		sed -i .bak 's/my wife/sed/g' love.txt
+			Output:
+				sed: -e expression #1, char 1: unknown command: `.'
+
+	If you only want to save those lines where matches were made, you can use the 'w' flag followed by a file name. So let's do this. Let's change 'love' to 'like'. We'll do a global replace so that no matter how many times 'love' appears on the line, it will get replaced by 'like'. And then we'll use the 'w' flag and a filename(i.e., like.txt) after it. And then the file we're going to use as input is love.txt. In this example(i.e., sed 's/love/like/gw like.txt' love.txt), sed displays the entire contents of the love.txt file to the screen with any replacements it made and it created a new file named like.txt that only contains those lines where the replacements were performed. So we will look at that like.txt and love.txt file. love.txt file will remain unchanged.
+		cat love.txt
+			Output:
+				I love sed.
+				This is line 2.
+				I love sed with all of my heart.
+				I love sed and my wife loves me. Also, my wife loves the cat.
+
+		sed 's/love/like/gw like.txt' love.txt
+			Output:
+				I like sed.
+				This is line 2.
+				I like sed with all of my heart.
+				I like sed and my wife likes me. Also, my wife likes the cat.
+
+		cat like.txt
+			Output:
+				I like sed.
+				I like sed with all of my heart.
+				I like sed and my wife likes me. Also, my wife likes the cat.
+
+		cat love.txt
+			Output:
+				I love sed.
+				This is line 2.
+				I love sed with all of my heart.
+				I love sed and my wife loves me. Also, my wife loves the cat.
+	
+	While we're talking about input and output, I would like to point out that 'sed' can be used in a pipeline instead of specifying a file, as an input, to work on. The simplest example would be to cat a file and pipe that to sed like below.
+		cat like.txt | sed 's/my wife/sed/g'	OR	  sed 's/my wife/sed/g' like.txt
+			Output:
+				I like sed.
+				I like sed with all of my heart.
+				I like sed and sed likes me. Also, sed likes the cat.
+	
+	This is a very common pattern with Linux commands where they(they mean commands here) can be given a file to operate on or they can use the data sent through a pipe to operate on. We've seen this with other commands such as cut, awk, sort, uniq, and others. Command pipelining is very powerful because you string as many commands together to make the data look the way you want it to. I'm going to generate some text to work on with an echo command.
+		echo '/home/jason'
+			Output:
+				/home/jason
+	
+	Let's say we want to change '/home/jason' to '/export/users/jasonc'. The challenging thing about this is that the string('/home/jason') we want to manipulate have forward slashes in them and we've been using forward slashes as a delimiter with sed. One way to get around this is to escape the forward slashes. I'm going to show you a better way in just a second, but let's see how we would do it with escaping first. Now to escape a character, simply precede it with a back slash.
+		echo '/home/jason' | sed 's/\/home\/jason/\/export\/users\/jasonc/'
+			Output:
+				/export/users/jasonc
+	
+	So we're starting our search pattern with a forward slash(1st forward slash which is a delimiter for sed), but the next forward slash isn't a delimiter so it needs to be escaped. So we're gonna use a back slash to escape this forward slash(2nd forward slash). Same thing again here(3rd forward slash). So now, we end our search pattern with 4th forward slash. Notice, we haven't put back slash before 4th forward slash because it is a delimiter, we don't want to escape it. And again, in our replacement string, starts with a forward slash, so need to escape it, so on and so forth. That feels like a lot to keep straight and it's easy to make a typing mistake in this situation. A nice feature was 'sed' is that you can use any character as the delimiter, so let's use a pound sign instead. So the first character that follows 's' will be treated as the delimiter, no matter what that character is. I'm going to use a pound sign(#) and now 'sed' will treat that pound sign as the delimiter.
+		echo '/home/jason' | sed 's#/home/jason#/export/users/jasonc#'
+			Output:
+				/export/users/jasonc
+		
+		echo '/home/jason' | sed 's:/home/jason:/export/users/jasonc:'
+			Output:
+				/export/users/jasonc
+	
+	If you need to use forward slashes in your search pattern or replacement text, choose a different delimiter other than the forward slash. All right, so enough with actually performing substitutions. Let's take a second here to talk about when you would actually want to perform/use them. One idea is to use templates or template files. For example, if you are constantly deploying new websites and use the same configuration(it is the configuration of the deployment system which deploys the website) except for the website name, then it would be a good idea to create a template file that contains all the standard configuration and a placeholder for the website name. Then you could use 'sed' command to simply replace all the placeholders with the actual website name when you're ready to deploy it. Another example of when you could use sed substitution feature is when you are migrating from one server to another. In this example, you would need to find and replace the old hostname with a new one in all the files in the /etc directory. Files such as /etc/hosts and there could be others as well depending on that system's configuration. Yet another example would be when you are copying configuration for a given service from one host to another. You might find yourself doing this especially if you are working on clusters. You would just copy the configuration from one host to the new host that you are adding to the cluster. Typically, you'll need to change the hostname in the configuration file and you could use the sed to do this for you. sed would be especially helpful if that hostname appeared many times in that configuration.
+	
+	Let's say we want to remove or delete some lines with sed. Well, how you do that is with the 'd' flag. Let's review the contents of our love.txt file.
+		cat love.txt
+			Output:
+				I love sed.
+				This is line 2.
+				I love sed with all of my heart.
+				I love sed and my wife loves me. Also, my wife loves the cat.
+
+	Let's say we want to remove the line that says 'This is line 2'. All you have to do is come up with a search pattern that will match that line and not the other ones. So we could use a search pattern of 'This' because the word 'This' only appears on the line that we want to delete.
+		sed '/This/d' love.txt
+			Output:
+				I love sed.
+				I love sed with all of my heart.
+				I love sed and my wife loves me. Also, my wife loves the cat.
+	
+	So to be clear here with the syntax, we start with the delimiter. And by default, we use the forward slash as the delimiter followed by the search pattern and a closing delimiter, again, this is a forward slash. And finally a 'd', which tells sed to delete the line that matches the provided pattern. Let's say we want to remove all the lines that contain the search pattern of 'love'. Remember, content of original file(i.e., love.txt) is getting changed.
+		sed '/love/d' love.txt
+			Output:
+				This is line 2.
+	
+	Sometimes when I'm working with a configuration file with many lines, I like to strip out the comments and blank lines to compact the output. That way I can see just the configuration and nothing else. It makes it easier to read, at least it does for me. I'm going to create an example configuration file to demonstrate this concept with.
+		echo '# User to run service as.' > config
+		echo 'User apache' >> config
+		echo >> config                  					--> this will put blank line
+		echo '# Group to run service as.' >> config
+		echo 'Group apache' >> config
+		cat config
+			Output:
+				# User to run service as.
+				User apache
+
+				# Group to run service as.
+				Group apache
+	
+	So this sample configuration file is just a few lines long, but you can easily imagine one with many many more lines. First, let's remove the comments.
+		sed '/^#/d' config
+			Output:
+				User apache
+
+				Group apache
+	
+	Remember that the search pattern is actually a regular expression. In regular expressions, the caret symbol(^) matches the beginning of a line. It matches a position and not a character. So if we want to match all the lines that start with a pound sign(#), we use '^#'. This makes sure that we don't accidentally delete lines that have actual configuration at the beginning of a line, but have a comment later on that same line. To delete/remove a blank line, we'll use another regular expression. Again, the caret symbol(^) matches the beginning of the line and the dollar sign($) matches the end of the line. So '^$' matches a line if the beginning of the line is immediately followed by the end of the line. In other words, ^$ matches a blank line.
+		sed '/^$/d' config
+			Output:
+				# User to run service as.
+				User apache
+				# Group to run service as.
+				Group apache
+				
+	So now, we know how to do the two things(remove blank lines and commented lines) that we want to do, but now we need to do them at the same time. We need to combine them. To use multiple sed scripts or sed expressions, we can separate them with semicolons.
+		sed '/^$/d ; /^#/d' config   OR   sed '/^#/d ; /^$/d' config
+			Output:
+				User apache
+				Group apache
+
+	For each line, 'sed' will perform the 1st sed expression/script which deletes the commented lines and then the 2nd sed expression/script which deletes blank lines. To show you that you can combine different types of sed expression/script, let's perform a substitution at the same time and let's change Apache to HTTPD in our config file.
+		sed '/^#/d ; /^$/d ; s/apache/httpd/' config
+			Output:
+				User httpd
+				Group httpd
+	
+	Just to be thorough, I wanna share with you another way to execute multiple sed expression/script. Mainly I wanna show you this just in case you happen to see it in a script or in someone else's work. That way, you'll know exactly what is going on. So the other way to do this is to use multiple -e options to sed, one for each sed expression/script to execute.
+		sed -e '/^#/d' -e '/^$/d' -e 's/apache/httpd/' config
+			Output:
+				User httpd
+				Group httpd
+	
+	'sed' also allows you to specify a file containing the sed expressions/scripts. So let's demonstrate this now. I'm going to create a file using the echo command here. Of course you can use an editor if you want to.
+		echo '/^#/d' > script.sed
+		echo '/^$/d' >> script.sed
+		echo 's/apache/httpd/' >> script.sed
+		cat script.sed
+			Output:
+				/^#/d
+				/^$/d
+				s/apache/httpd/
+
+	So what we've done here is put one sed expression/script per line. Now we'll use the -f option and supply the path to the file that has the sed expressions/scripts in it.
+		sed -f script.sed config
+			Output:
+				User httpd
+				Group httpd
+	
+	Before we wrap up this lesson on sed, let's take a look at using addresses. An address determines on what lines the sed expression/script will be executed on. If no address is given, the expression/script is performed on all lines. An address is specified before the sed expression/script. The simplest of addresses is a line number. Here are the contents of our sample configuration file to refresh our memories.
+		cat config
+			Output:
+				# User to run service as.
+				User apache
+
+				# Group to run service as.
+				Group apache
+
+	Below is an example that will only execute sed expression/script against line 2 of the file. As you can see, the search pattern of 'apache' was replaced by 'httpd' only on the second line. There's also a match on the last line of the file, but that was left alone because it didn't match the address of line 2.
+		sed '2 s/apache/httpd/' config
+			Output:
+				# User to run service as.
+				User httpd
+
+				# Group to run service as.
+				Group apache
+	
+	By the way, some people do not use space after the address. So below is the same command without that extra space.
+		sed '2s/apache/httpd/' config
+			Output:
+				# User to run service as.
+				User httpd
+
+				# Group to run service as.
+				Group apache
+	
+	You can also use a regular expression as an address to match lines. Let's say you want to replace 'apache' with 'httpd', but only on lines that contain the word 'Group'.
+		sed '/Group/ s/apache/httpd/' config
+			Output:
+				# User to run service as.
+				User apache
+
+				# Group to run service as.
+				Group httpd
+	
+	You can also specify a range by separating two address specifications with a comma. For example, if we wanted to change the word 'run' to 'execute' but only on lines 1 through 3, we would do this.
+		sed '1,3 s/run/execute/' config
+			Output:
+				# User to execute service as.
+				User apache
+
+				# Group to run service as.
+				Group apache
+	
+	There was only one occurrence of 'run' from line 1 through 3 and it was changed. The occurrence on line 4 was not. So let's extend the range to include line four.
+		sed '1,4 s/run/execute/' config
+			Output:
+				# User to execute service as.
+				User apache
+
+				# Group to execute service as.
+				Group apache
+				
+	Again, you can use range of regular expressions instead of line numbers. Let's say we want to change 'run' to 'execute' starting with the line that matches '# User' and ending at the next blank line. So here's how we would do that.
+		sed '/# User/,/^$/ s/run/execute/' config
+			Output:
+				# User to execute service as.
+				User apache
+
+				# Group to run service as.
+				Group apache
+	
+	So there you can see that every instance of 'run' that was in-between the line that started with '# User' and the next blank line was exchanged with a text 'execute'. Of course, there was only one match, so only one substitution was made. But you get the point. You could specify a large portion/range of the file if you wanted to. One starting point and ending point as your address and then change everything in that section while leaving everything else alone. It's very powerful to use addresses with sed.
+	
+2) Google the followings:
+===========================
+	a) Different Ways to Read File in Bash Script Using While Loop
+	b) Linux filesystem hierarchy
+			/ -> The root directory of the entire filesystem hierarchy, everything is nestled under this directory.
+			/bin -> Essential ready-to-run programs (binaries), includes the most basic commands such as ls and cp.
+			/boot -> Contains kernel boot loader files.
+			/dev -> Device files.
+			/etc -> Core system configuration directory, should hold only configuration files and not any binaries.
+			/home -> Personal directories for users, holds your documents, files, settings, etc.
+			/lib -> Holds library files that binaries can use.
+			/media -> Used as an attachment point for removable media like USB drives.
+			/mnt -> Temporarily mounted filesystems.
+			/opt -> Optional application software packages.
+			/proc -> Information about currently running processes.
+			/root -> The root user's home directory.
+			/run -> Information about the running system since the last boot.
+			/sbin -> Contains essential system binaries, usually can only be ran by root.
+			/srv -> Site-specific data which are served by the system.
+			/tmp -> Storage for temporary files
+			/usr -> This is unfortunately named, most often it does not contain user files in the sense of a home folder. This is meant for user installed software and utilities, however that is not to say you can't add personal directories in there. Inside this directory are sub-directories for /usr/bin, /usr/local, etc.
+			/var -> Variable directory, it's used for system logging, user tracking, caches, etc. Basically anything that is subject to change all the time.
+		
+		In other words, 
+			/bin    ->  common binary executables used by all users
+			/boot   ->  files associated with boot loader
+			/dev    ->  attached devices (usb, cdrom, mouse, keyboard)
+			/etc    ->  configuration files
+			/home   ->  personal directories for each user account
+			/lib    ->  shared system libraries
+			/media  ->  directory for mounting removable devices (floppy drive, cdrom)
+			/mnt    ->  directory for mounting filesystems (nfs, smb)
+			/opt    ->  optional vendor add-on software
+			/proc   ->  virtual filesystem for system processes/resources information
+			/root   ->  home directory for administrator account
+			/run    ->  storage for runtime information
+			/sbin   ->  binary executables used by administrator
+			/srv    ->  data for server services
+			/sys    ->  virtual filesystem for hardware/driver information
+			/tmp    ->  temporary files purged on reboot
+			/usr    ->  utilities and read-only user data/programs
+			/var    ->  variable and log files
+			
+	c) su Command in Linux
+	d) How To Configure SSH Key-Based Authentication on a Linux Server
+	e) Passing parameters to a Bash function:
+		There are two typical ways of declaring a function. I prefer the second approach.
+			function function_name {
+			   command...
+			} 
+			
+				OR
+
+			function_name () {
+			   command...
+			} 
+			
+			To call a function with arguments:
+			function_name "$arg1" "$arg2"
